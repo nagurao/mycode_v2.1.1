@@ -42,7 +42,7 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 20 - Temperature & Humidity 
 21 - SMS Node
 250 - Default Firmware Node
-254 - Wifi Node
+254 - Thingspeak Node
 */
 
 #define BALCONYLIGHT_NODE_ID 1
