@@ -54,12 +54,12 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define BOREWELL_NODE_ID 7
 #define SUMP_MOTOR_NODE_ID 8
 #define TAP_MOTOR_NODE_ID 9
-#define BALCONY_REPEATER_NODE_ID 10
+#define REPEATER_01_NODE_ID 10
 #define LCD_NODE_ID 11
 #define BATT_VOLTAGE_NODE_ID 12
 #define SOLAR_VOLTAGE_NODE_ID 13
 #define REMOTE_CONTROLLER_NODE_ID 14
-#define DB_REPEATER_NODE_ID 15
+#define REPEATER_02_NODE_ID 15
 #define INV_IN_NODE_ID 16
 #define INV_OUT_NODE_ID 17
 #define PH3_NODE_ID 18
