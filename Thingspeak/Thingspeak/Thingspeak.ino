@@ -209,11 +209,11 @@ void before()
 
 void setup()
 {
-	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
+	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, heartbeat);
 	thingspeakTimer = Alarm.timerRepeat(THINGSPEAK_INTERVAL, processThingspeakData);
 	incomingDataTimer = Alarm.timerRepeat(FIVE_MINUTES, insertFetchAndProcessDataRequest);
 	Alarm.timerOnce(ONE_MINUTE, insertFetchAndProcessDataRequest);
-	Alarm.timerRepeat(ONE_HOUR * 3, requestTime);
+	Alarm.timerRepeat(ONE_HOUR * 3, getTimeFromGateway);
 
 	for (byte channelId = 0; channelId < FIELDS_PER_CHANNEL; channelId++)
 	{
@@ -1114,4 +1114,14 @@ void sendLastUpdateTime()
 	send(gatewayTimeMessage.set(mytime));
 	wait(WAIT_AFTER_SEND_MESSAGE);
 	resetTimeForGateway();
+}
+
+void heartbeat()
+{
+	sendHeartbeat();
+}
+
+void getTimeFromGateway()
+{
+	requestTime();
 }
