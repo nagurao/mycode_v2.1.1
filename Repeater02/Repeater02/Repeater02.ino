@@ -9,6 +9,8 @@
 #define MY_RADIO_NRF24
 #define MY_REPEATER_FEATURE
 #define MY_NODE_ID REPEATER_02_NODE_ID
+#define MY_PARENT_NODE_ID REPEATER_01_NODE_ID
+#define MY_PARENT_NODE_IS_STATIC
 
 #include <MyNodes.h>
 #include <MySensors.h>

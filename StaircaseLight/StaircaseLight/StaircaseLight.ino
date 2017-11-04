@@ -7,7 +7,7 @@
 
 #define MY_RADIO_NRF24
 #define MY_NODE_ID STAIRCASE_LIGHT_NODE_ID
-#define MY_PARENT_NODE_ID BALCONY_REPEATER_NODE_ID
+#define MY_PARENT_NODE_ID REPEATER_01_NODE_ID
 
 #include <MyNodes.h>
 #include <MySensors.h>

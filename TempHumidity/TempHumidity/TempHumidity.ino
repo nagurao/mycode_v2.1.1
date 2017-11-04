@@ -12,7 +12,6 @@
 
 #include <MyNodes.h>
 #include <MySensors.h>
-#include <MyConfig.h>
 
 #define APPLICATION_NAME "Temp & Humidity"
 
