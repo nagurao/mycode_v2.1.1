@@ -3,13 +3,11 @@
 #include <Time.h>
 #include <SPI.h>
 
-#define REPEATER_NODE
 #define STATUS_LEDS
 
 #define MY_RADIO_NRF24
 #define MY_REPEATER_FEATURE
 #define MY_NODE_ID REPEATER_01_NODE_ID
-#define MY_DEBUG
 
 #include <MyNodes.h>
 #include <MySensors.h>

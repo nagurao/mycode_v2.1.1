@@ -118,10 +118,9 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define MOTOR_STATUS_PIN 3
 #endif
 
-#if defined REPEATER_NODE
-#endif
-
 #if defined STATUS_LEDS
+#define MY_DEFAULT_LED_BLINK_PERIOD 300
+#define MY_WITH_LEDS_BLINKING_INVERSE
 #define MY_DEFAULT_ERR_LED_PIN 4  
 #define MY_DEFAULT_RX_LED_PIN  5
 #define MY_DEFAULT_TX_LED_PIN  6

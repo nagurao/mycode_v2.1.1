@@ -3,7 +3,6 @@
 #include <Time.h>
 #include <SPI.h>
 
-#define REPEATER_NODE
 #define STATUS_LEDS
 
 #define MY_RADIO_NRF24
