@@ -187,7 +187,7 @@ void loop()
 		request(SOLAR_VOLTAGE_ID, V_VOLTAGE, SOLAR_VOLTAGE_NODE_ID);
 		requestSolarVoltageTimer = Alarm.timerOnce(REQUEST_INTERVAL, checkSolarVolategRequestStatus);
 		solarVoltageRequestCount++;
-		if (solarVoltageRequestCount == 3)
+		if (solarVoltageRequestCount == 10)
 		{
 			solarVoltage = DEFAULT_VOLTS;
 			sendSolarVoltage();
@@ -196,7 +196,7 @@ void loop()
 			solarVoltageRequestCount = 0;
 			solarNodeRequestCount++;
 		}
-		if (solarNodeRequestCount == 10)
+		if (solarNodeRequestCount == 20)
 		{
 			solarNodeUp = false;
 			Alarm.free(getSolarVoltageTimer);
