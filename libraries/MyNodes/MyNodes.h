@@ -72,6 +72,11 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define THINGSPEAK_NODE_ID 254
 #define WIFI_NODEMCU_ID 1
 
+#if defined MY_REPEATER_FEATURE
+#define MY_RX_MESSAGE_BUFFER_FEATURE
+#define MY_RF24_IRQ_PIN 2
+#endif
+
 #if defined LIGHT_NODE
 
 #define LIGHT_RELAY_ID 1
