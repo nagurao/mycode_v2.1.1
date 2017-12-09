@@ -19,9 +19,9 @@
 #define APPLICATION_NAME "Battery Voltage"
 
 #define DEFAULT_R1_VALUE 47.70F
-#define DEFAULT_R2_VALUE 3.24F
+#define DEFAULT_R2_VALUE 9.82F
 #define DEFAULT_VOLTS 0.00F
-#define DEFAULT_SCALE_FACTOR 0.28163F
+#define DEFAULT_SCALE_FACTOR 0.175F //0.28163F
 
 AlarmId heartbeatTimer;
 AlarmId getSolarVoltageTimer;
@@ -62,6 +62,7 @@ MyMessage batteryVoltageMessage(BATTERY_VOLTAGE_ID, V_VOLTAGE);
 MyMessage thingspeakMessage(WIFI_NODEMCU_ID, V_CUSTOM);
 MyMessage lcdVoltageMessage;
 MyMessage resetRelayMessage(RESET_RELAY_ID, V_STATUS);
+MyMessage rawAnalogValueMessage;
 
 void before()
 {
@@ -121,6 +122,10 @@ void presentation()
 	present(SOLAR_VOLTAGE_ID, S_MULTIMETER, "Solar Voltage");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(RESET_RELAY_ID, S_BINARY, "Reset Relay");
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	present(REF_RAW_VALUE_ID, S_CUSTOM, "Reference Raw");
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	present(INP_RAW_VALUE_ID, S_CUSTOM, "Input Raw");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	send(resetRelayMessage.set(RELAY_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
@@ -301,15 +306,27 @@ void getBatteryVoltage()
 		wait(WAIT_50MS);
 	}
 	thresholdVoltage = thresholdVoltage / 10;
+	rawAnalogValueMessage.setSensor(REF_RAW_VALUE_ID);
+	rawAnalogValueMessage.setType(V_VAR4);
+	rawAnalogValueMessage.set(thresholdVoltage, 2);
+	send(rawAnalogValueMessage);
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
 	thresholdVoltage = thresholdVoltage * 5.0 / 1024;
 
 	voltsPerBit = ((thresholdVoltage * (resistorR1Value + resistorR2Value)) / (resistorR2Value * 1024));
 
 	sensedInputVoltage = sensedInputVoltage / 10;
-	if (scaleFactor < 0.75)
+	rawAnalogValueMessage.setSensor(INP_RAW_VALUE_ID);
+	rawAnalogValueMessage.setType(V_VAR5);
+	rawAnalogValueMessage.set(sensedInputVoltage, 2);
+	send(rawAnalogValueMessage);
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
+	if (scaleFactor < 0.25)
 		batteryVoltage = (sensedInputVoltage * voltsPerBit) + scaleFactor;
 	else
-		batteryVoltage = (sensedInputVoltage * voltsPerBit) * scaleFactor;
+		batteryVoltage = (sensedInputVoltage * voltsPerBit);
 
 	send(batteryVoltageMessage.set(batteryVoltage, 5));
 	wait(WAIT_AFTER_SEND_MESSAGE);

@@ -17,9 +17,9 @@
 #define APPLICATION_NAME "Solar Voltage"
 
 #define DEFAULT_R1_VALUE 47.30F
-#define DEFAULT_R2_VALUE 3.24F
+#define DEFAULT_R2_VALUE 9.87F
 #define DEFAULT_VOLTS 0.00F
-#define DEFAULT_SCALE_FACTOR 0.26045F
+#define DEFAULT_SCALE_FACTOR 0.0027F
 
 AlarmId requestTimer;
 AlarmId heartbeatTimer;
@@ -42,6 +42,7 @@ float resistorR2Value;
 float scaleFactor;
 
 MyMessage solarVoltageMessage(SOLAR_VOLTAGE_ID, V_VOLTAGE);
+MyMessage rawAnalogValueMessage;
 
 void before()
 {
@@ -78,6 +79,10 @@ void presentation()
 	present(R2_VALUE_ID, S_CUSTOM, "R2 Value");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(SCALE_FACTOR_ID, S_CUSTOM, "Scale Factor");
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	present(REF_RAW_VALUE_ID, S_CUSTOM, "Reference Raw");
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	present(INP_RAW_VALUE_ID, S_CUSTOM, "Input Raw");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	sendNodeUpMessage();
 }
@@ -180,17 +185,29 @@ void readSolarVoltage()
 		wait(WAIT_50MS);
 	}
 	thresholdVoltage = thresholdVoltage / 10;
+	rawAnalogValueMessage.setSensor(REF_RAW_VALUE_ID);
+	rawAnalogValueMessage.setType(V_VAR4);
+	rawAnalogValueMessage.set(thresholdVoltage, 2);
+	send(rawAnalogValueMessage);
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
 	thresholdVoltage = thresholdVoltage * 5.0 / 1024;
 
 	voltsPerBit = ((thresholdVoltage * (resistorR1Value + resistorR2Value)) / (resistorR2Value * 1024));
 
 	sensedInputVoltage = sensedInputVoltage / 10;
 
+	rawAnalogValueMessage.setSensor(INP_RAW_VALUE_ID);
+	rawAnalogValueMessage.setType(V_VAR5);
+	rawAnalogValueMessage.set(sensedInputVoltage, 2);
+	send(rawAnalogValueMessage);
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
 	float solarVoltage = 0.00;
-	if (scaleFactor < 0.75)
+	if (scaleFactor < 0.25)
 		solarVoltage = (sensedInputVoltage * voltsPerBit) + scaleFactor;
 	else
-		solarVoltage = (sensedInputVoltage * voltsPerBit) * scaleFactor;
+		solarVoltage = (sensedInputVoltage * voltsPerBit);
 
 	send(solarVoltageMessage.set(solarVoltage, 5));
 	wait(WAIT_AFTER_SEND_MESSAGE);

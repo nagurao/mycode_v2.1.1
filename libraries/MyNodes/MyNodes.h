@@ -72,7 +72,7 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define THINGSPEAK_NODE_ID 254
 #define WIFI_NODEMCU_ID 1
 
-#if defined MY_REPEATER_FEATURE
+#if defined MY_BUFFER_FEATURE
 #define MY_RX_MESSAGE_BUFFER_FEATURE
 #define MY_RF24_IRQ_PIN 2
 #endif
@@ -154,7 +154,8 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define BATTERY_VOLTAGE_ID 4
 #define SOLAR_VOLTAGE_ID 5
 #define RESET_RELAY_ID 6
-#define RAW_VALUE_ID 7
+#define REF_RAW_VALUE_ID 7
+#define INP_RAW_VALUE_ID 8
 
 #define VOLTAGE_SENSE_PIN A0
 #define THRESHOLD_VOLTAGE_PIN A1

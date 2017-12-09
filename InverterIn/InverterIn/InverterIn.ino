@@ -172,6 +172,8 @@ void receive(const MyMessage &message)
 		pulseFactor = blinksPerWattHour / 1000;
 		break;
 	case V_VAR3:
+		int valueVAR3;
+		valueVAR3 = message.getInt();
 		switch (message.getInt())
 		{
 		case 0:
@@ -210,15 +212,11 @@ void receive(const MyMessage &message)
 			resetAll();
 			break;
 		}
-		switch (message.getInt())
+		if (valueVAR3)
 		{
-		case 1:
-		case 2:
-		case 3:
-		case 4:
 			MyMessage resetTypeMessage(RESET_TYPE_ID, V_VAR3);
 			resetTypeMessage.setDestination(INV_OUT_NODE_ID);
-			send(resetTypeMessage.set(message.getInt()));
+			send(resetTypeMessage.set(valueVAR3));
 			wait(WAIT_AFTER_SEND_MESSAGE);
 			break;
 		}
