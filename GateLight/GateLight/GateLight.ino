@@ -128,19 +128,11 @@ void receive(const MyMessage &message)
 			switch (currMode)
 			{
 			case STANDBY_MODE:
-				digitalWrite(LIGHT_RELAY_PIN, RELAY_OFF);
-				send(lightRelayMessage.set(RELAY_OFF));
-				wait(WAIT_AFTER_SEND_MESSAGE);
-				send(thingspeakMessage.set(RELAY_OFF));
-				wait(WAIT_AFTER_SEND_MESSAGE);
+				turnOffLights();
 				currMode = STANDBY_MODE;
 				break;
 			case DUSKLIGHT_MODE:
-				digitalWrite(LIGHT_RELAY_PIN, RELAY_ON);
-				send(lightRelayMessage.set(RELAY_ON));
-				wait(WAIT_AFTER_SEND_MESSAGE);
-				send(thingspeakMessage.set(RELAY_ON));
-				wait(WAIT_AFTER_SEND_MESSAGE);
+				turnOnLights();
 				currMode = DUSKLIGHT_MODE;
 				break;
 			}
@@ -186,31 +178,46 @@ void receive(const MyMessage &message)
 			wait(WAIT_AFTER_SEND_MESSAGE);
 		}
 		break;
-	case V_VAR3:
-		if (currMode == STANDBY_MODE)
+	case V_STATUS:
+		switch (currMode)
 		{
+		case STANDBY_MODE:
 			if (message.getInt())
-			{
-				digitalWrite(LIGHT_RELAY_PIN, RELAY_ON);
-				send(lightRelayMessage.set(RELAY_ON));
-				wait(WAIT_AFTER_SEND_MESSAGE);
-				send(thingspeakMessage.set(RELAY_ON));
-				wait(WAIT_AFTER_SEND_MESSAGE);
-				send(staircaseLightRelayMessage.set(RELAY_ON));
-				wait(WAIT_AFTER_SEND_MESSAGE);
-			}
+				turnOnLights();
 			else
-			{
-				digitalWrite(LIGHT_RELAY_PIN, RELAY_OFF);
-				send(lightRelayMessage.set(RELAY_OFF));
-				wait(WAIT_AFTER_SEND_MESSAGE);
-				send(thingspeakMessage.set(RELAY_OFF));
-				wait(WAIT_AFTER_SEND_MESSAGE);
-				send(staircaseLightRelayMessage.set(RELAY_OFF));
-				wait(WAIT_AFTER_SEND_MESSAGE);
-			}
+				turnOffLights();
+			break;
+		default:
+			break;
 		}
-		break;
+	}
+}
+
+void turnOnLights()
+{
+	digitalWrite(LIGHT_RELAY_PIN, RELAY_ON);
+	send(lightRelayMessage.set(RELAY_ON));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+	send(thingspeakMessage.set(RELAY_ON));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+	if (currMode == STANDBY_MODE)
+	{
+		send(staircaseLightRelayMessage.set(RELAY_ON));
+		wait(WAIT_AFTER_SEND_MESSAGE);
+	}
+}
+
+void turnOffLights()
+{
+	digitalWrite(LIGHT_RELAY_PIN, RELAY_OFF);
+	send(lightRelayMessage.set(RELAY_OFF));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+	send(thingspeakMessage.set(RELAY_OFF));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+	if (currMode == STANDBY_MODE)
+	{
+		send(staircaseLightRelayMessage.set(RELAY_OFF));
+		wait(WAIT_AFTER_SEND_MESSAGE);
 	}
 }
 
