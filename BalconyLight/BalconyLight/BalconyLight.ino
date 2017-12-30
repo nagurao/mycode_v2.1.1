@@ -64,7 +64,7 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(LIGHT_RELAY_ID, S_BINARY, "Balcony Light Relay");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);

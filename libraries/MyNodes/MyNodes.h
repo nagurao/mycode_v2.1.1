@@ -17,6 +17,15 @@
 #define REQUEST_INTERVAL 60
 #define HEARTBEAT_INTERVAL 600
 
+char* getCodeVersion()
+{
+	char codeVersion[20];
+	strcpy(codeVersion, "");
+	strcat(codeVersion, __DATE__);
+	strcat(codeVersion, " ");
+	strcat(codeVersion, __TIME__);
+	return codeVersion;
+}
 /*
 The following are the Node Ids assigned, populated here as comments for easy reference.
 0 - Gateway
@@ -129,6 +138,12 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define MY_DEFAULT_ERR_LED_PIN 4  
 #define MY_DEFAULT_RX_LED_PIN  5
 #define MY_DEFAULT_TX_LED_PIN  6
+#endif
+
+#if defined STATUS_LEDS_MODEMCU
+#define MY_DEFAULT_LED_BLINK_PERIOD 300
+#define MY_WITH_LEDS_BLINKING_INVERSE
+#define MY_DEFAULT_RX_LED_PIN  LED_BUILTIN
 #endif
 
 #if defined LCD_NODE
@@ -282,9 +297,8 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define PH1_CURR_WATT_ID 4
 #define INV_IN_OUT_DELTA_ID 5
 #define PH3_PH1_DELTA_ID 6
-
-
 #endif
+
 #if defined NODE_HAS_RELAY
 #define RELAY_ON 1
 #define RELAY_OFF 0
@@ -308,7 +322,12 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #endif
 
 #if defined NODE_INTERACTS_WITH_LCD
-#define LCD_NODE_ID 11
+#define INV_IN_CURR_WATT_ID 1
+#define INV_OUT_CURR_WATT_ID 2
+#define PH3_CURR_WATT_ID 3
+#define PH1_CURR_WATT_ID 4
+#define INV_IN_OUT_DELTA_ID 5
+#define PH3_PH1_DELTA_ID 6
 #endif
 
 #if defined KEYPAD_1R_2C

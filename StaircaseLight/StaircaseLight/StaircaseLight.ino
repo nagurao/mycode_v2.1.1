@@ -8,6 +8,7 @@
 #define MY_RADIO_NRF24
 #define MY_NODE_ID STAIRCASE_LIGHT_NODE_ID
 #define MY_PARENT_NODE_ID REPEATER_01_NODE_ID
+#define MY_PARENT_NODE_IS_STATIC
 
 #include <MyNodes.h>
 #include <MySensors.h>
@@ -49,7 +50,7 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(LIGHT_RELAY_ID, S_BINARY, "Staircase Light");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);

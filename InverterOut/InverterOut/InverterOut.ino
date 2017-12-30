@@ -4,6 +4,7 @@
 #include <SPI.h>
 
 #define WATT_METER_NODE
+#define NODE_INTERACTS_WITH_LCD
 
 #define MY_RADIO_NRF24
 #define MY_NODE_ID INV_OUT_NODE_ID
@@ -101,7 +102,7 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(CURR_WATT_ID, S_POWER, "Current Consumption");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
@@ -288,15 +289,6 @@ void updateConsumptionData()
 				accumulationTimer = Alarm.timerRepeat(REQUEST_INTERVAL, getAccumulation);
 			}
 		}
-		if (accumulationsStatus == ALL_DONE)
-		{
-			send(hourlyConsumptionMessage.set((accumulatedKWH - hourlyConsumptionInitKWH), 5));
-			wait(WAIT_AFTER_SEND_MESSAGE);
-			send(dailyConsumptionMessage.set((accumulatedKWH - dailyConsumptionInitKWH), 5));
-			wait(WAIT_AFTER_SEND_MESSAGE);
-			send(monthlyConsumptionMessage.set((accumulatedKWH - monthlyConsumptionInitKWH), 5));
-			wait(WAIT_AFTER_SEND_MESSAGE);
-		}
 	}
 }
 
@@ -379,7 +371,33 @@ void getAccumulation()
 
 void sendAccumulationData()
 {
+	send(currentConsumptionMessage.set(currWatt, 2));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
 	thingspeakMessage.setSensor(CURR_WATT_ID);
 	send(thingspeakMessage.set(currWatt, 5));
 	wait(WAIT_AFTER_SEND_MESSAGE);
+
+	MyMessage lcdNodeMessage;
+	lcdNodeMessage.setSensor(INV_OUT_CURR_WATT_ID);
+	lcdNodeMessage.setType(V_WATT);
+	lcdNodeMessage.set(currWatt, 2);
+	send(lcdNodeMessage);
+	wait(WAIT_AFTER_SEND_MESSAGE);
+	
+	lcdNodeMessage.setSensor(INV_IN_OUT_DELTA_ID);
+	lcdNodeMessage.setType(V_KWH);
+	lcdNodeMessage.set(deltaUnitsRealtime, 2);
+	send(lcdNodeMessage);
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
+	if (accumulationsStatus == ALL_DONE)
+	{
+		send(hourlyConsumptionMessage.set((accumulatedKWH - hourlyConsumptionInitKWH), 5));
+		wait(WAIT_AFTER_SEND_MESSAGE);
+		send(dailyConsumptionMessage.set((accumulatedKWH - dailyConsumptionInitKWH), 5));
+		wait(WAIT_AFTER_SEND_MESSAGE);
+		send(monthlyConsumptionMessage.set((accumulatedKWH - monthlyConsumptionInitKWH), 5));
+		wait(WAIT_AFTER_SEND_MESSAGE);
+	}
 }

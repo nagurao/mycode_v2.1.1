@@ -10,10 +10,12 @@
 #define OTA_UPDATE_FEATURE
 
 #define WIFI_NODE
+#define LIGHT_NODE
 #define WATT_METER_NODE
 #define SOLAR_BATT_VOLTAGE_NODE
 #define NODE_INTERACTS_WITH_RELAY
 #define NODE_INTERACTS_WITH_WIFI_AND_LCD
+#define STATUS_LEDS_MODEMCU
 
 #define MY_DEBUG
 #define MY_RADIO_NRF24
@@ -192,6 +194,8 @@ MyMessage sunriseTimeMessage(SUNRISE_TIME_ID, V_VAR1);
 MyMessage sunsetTimeMessage(SUNSET_TIME_ID, V_VAR2);
 MyMessage resetRelayMessage(RESET_RELAY_ID, V_STATUS);
 
+char *codeVersion;
+
 void before()
 {
 #if defined OTA_UPDATE_FEATURE
@@ -245,6 +249,7 @@ void setup()
 	sunriseSeconds = DEFAULT_SUNRISE_SUNSET_TIME;
 	sunsetSeconds = DEFAULT_SUNRISE_SUNSET_TIME;
 	firstTime = true;
+	//Blynk.begin(auth);
 }
 
 void presentation()
@@ -294,7 +299,7 @@ void loop()
 			wait(WAIT_AFTER_SEND_MESSAGE);
 		}
 	}
-
+	//Blynk.run();
 	Alarm.delay(1);
 }
 
@@ -844,16 +849,16 @@ void processIncomingData()
 			{
 			case IN_BALCONY_LIGHT_OPER_MODE_IDX:
 				lightNodeMessage.setDestination(BALCONYLIGHT_NODE_ID);
-				lightNodeMessage.setSensor(CURR_MODE_ID);
-				lightNodeMessage.setType(V_VAR1);
+				lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+				lightNodeMessage.setType(V_STATUS);
 				switch (incomingChannelData[channelId])
 				{
 				case 1:
-					lightNodeMessage.set(STANDBY_MODE);
+					lightNodeMessage.set(RELAY_OFF);
 					send(lightNodeMessage);
 					break;
 				case 2:
-					lightNodeMessage.set(DUSKLIGHT_MODE);
+					lightNodeMessage.set(RELAY_ON);
 					send(lightNodeMessage);
 					break;
 				}
@@ -861,16 +866,16 @@ void processIncomingData()
 				break;
 			case IN_GATE_LIGHT_OPER_MODE_IDX:
 				lightNodeMessage.setDestination(GATELIGHT_NODE_ID);
-				lightNodeMessage.setSensor(CURR_MODE_ID);
-				lightNodeMessage.setType(V_VAR1);
+				lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+				lightNodeMessage.setType(V_STATUS);
 				switch (incomingChannelData[channelId])
 				{
 				case 1:
-					lightNodeMessage.set(STANDBY_MODE);
+					lightNodeMessage.set(RELAY_OFF);
 					send(lightNodeMessage);
 					break;
 				case 2:
-					lightNodeMessage.set(DUSKLIGHT_MODE);
+					lightNodeMessage.set(RELAY_ON);
 					send(lightNodeMessage);
 					break;
 				}
@@ -1126,3 +1131,13 @@ void getTimeFromGateway()
 {
 	requestTime();
 }
+
+/*BLYNK_WRITE(V0)
+{
+	lightNodeMessage.setDestination(BALCONYLIGHT_NODE_ID);
+	lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+	lightNodeMessage.setType(V_STATUS);
+	lightNodeMessage.set(param.asInt());
+	send(lightNodeMessage);
+	wait(WAIT_AFTER_SEND_MESSAGE);
+}*/

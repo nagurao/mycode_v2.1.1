@@ -26,7 +26,7 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 }
 void loop()
 {

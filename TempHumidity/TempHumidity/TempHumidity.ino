@@ -38,7 +38,7 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(HUMIDITY_ID, S_HUM, "Humidity");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);

@@ -81,7 +81,7 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(LCD_BACKLIGHT_ID, S_BINARY, "LCD Backlit Light");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);

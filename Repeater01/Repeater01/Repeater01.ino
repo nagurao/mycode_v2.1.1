@@ -8,6 +8,7 @@
 #define MY_RADIO_NRF24
 #define MY_REPEATER_FEATURE
 #define MY_NODE_ID REPEATER_01_NODE_ID
+//#define MY_BUFFER_FEATURE
 
 #include <MyNodes.h>
 #include <MySensors.h>
@@ -29,7 +30,7 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 }
 
 void loop()
