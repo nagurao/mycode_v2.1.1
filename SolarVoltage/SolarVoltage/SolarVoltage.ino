@@ -67,7 +67,6 @@ void setup()
 
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
 	solarVoltageMessage.setDestination(BATT_VOLTAGE_NODE_ID);
-	nodeUpTimer = Alarm.timerRepeat(FIVE_MINUTES, sendNodeUpMessage);
 }
 
 void presentation()
@@ -84,7 +83,6 @@ void presentation()
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(INP_RAW_VALUE_ID, S_CUSTOM, "Input Raw");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	sendNodeUpMessage();
 }
 
 void loop()
@@ -165,6 +163,8 @@ void receive(const MyMessage &message)
 			Alarm.free(requestTimer);
 			sendScaleFactorRequest = false;
 			request(SCALE_FACTOR_ID, V_VAR3);
+			sendNodeUpMessage();
+			nodeUpTimer = Alarm.timerRepeat(FIVE_MINUTES, sendNodeUpMessage);
 		}
 	case V_VOLTAGE:
 		if (resistorR1Received && resistorR2Received && scaleFactorReceived)

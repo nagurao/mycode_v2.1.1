@@ -4,7 +4,7 @@
 #ifndef MyNodes_h
 #define MyNodes_h
 
-#define WAIT_AFTER_SEND_MESSAGE 20
+#define WAIT_AFTER_SEND_MESSAGE 500
 #define WAIT_5MS 5
 #define WAIT_10MS 10
 #define WAIT_50MS 50
@@ -102,6 +102,9 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 // Overhead Tank 01
 #if defined TANK_01_NODE
 #define DRY_RUN_POLL_DURATION 900
+#define BOREWELL_ADHOC_ID 3
+#define BORE_ON_RELAY_ID 2
+#define BORE_OFF_RELAY_ID 3
 #endif
 
 // Overhead Tank 02
@@ -190,11 +193,6 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define CURR_MODE_ID 2
 #define BORE_ON_RELAY_ID 2
 #define BORE_OFF_RELAY_ID 3
-
-#define BOREWELL_NODE_ID 7
-#define SUMP_MOTOR_NODE_ID 8
-#define TAP_MOTOR_NODE_ID 9
-
 #endif
 
 #if defined WATT_METER_NODE
@@ -204,37 +202,23 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define MAX_WATT_INVERTER 2000
 
 #define CURR_WATT_ID 1
-#define HOURLY_WATT_CONSUMPTION_ID 2
-#define DAILY_WATT_CONSUMPTION_ID 3
-#define MONTHLY_WATT_CONSUMPTION_ID 4
-#define ACCUMULATED_WATT_CONSUMPTION_ID 5
-#define DELTA_WATT_CONSUMPTION_ID 6
-#define CURR_PULSE_COUNT_ID 7
-#define BLINKS_PER_KWH_ID 8
-#define RESET_TYPE_ID 9
-#define INCOMING_REQUEST_ID 10
+#define ACCUMULATED_WATT_CONSUMPTION_ID 2
+#define HOURLY_KWATT_INIT_ID 3
+#define HOURLY_WATT_CONSUMPTION_ID 4
+#define DAILY_KWATT_INIT_ID 5
+#define DAILY_WATT_CONSUMPTION_ID 6
+#define MONTHLY_KWATT_INIT_ID 7
+#define MONTHLY_WATT_CONSUMPTION_ID 8
+#define DELTA_WATT_CONSUMPTION_ID 9
+#define CURR_PULSE_COUNT_ID 10
+#define RESET_TYPE_ID 11
 
 #define PULSE_SENSOR_PIN 3
 #define INTERRUPT_PULSE 1 // PULSE_SENSOR_PIN - 2
 
-#define RESET_NONE 0
-#define RESET_HOUR 1
-#define RESET_DAY 2
-#define RESET_MONTH 3
-#define RESET_ALL 4
+#define RESET_ALL 1
 #define ZERO 0
 
-#define GET_HOURLY_KWH 0
-#define GET_DAILY_KWH 1
-#define GET_MONTHLY_KWH 2
-#define ALL_DONE 3
-
-#define REQ_CURR_WATT 1
-#define REQ_HOURLY_WATT 2
-#define REQ_DAILY_WATT 3
-#define REQ_MONTHLY_WATT 4
-#define REQ_DAILY_DELTA_WATT 5
-#define REQ_CURR_DELTA_WATT 6
 
 #endif
 
@@ -351,18 +335,15 @@ byte colsPins[2] = { 4,5 };
 #endif
 
 #if defined WATER_TANK_NODE
-#define PRESSURE_SENSOR_PIN A0
-#define REFERENCE_VOLTAGE_PIN A1
+#define LOW_LEVEL_PIN 2
+#define HIGH_LEVEL_PIN 3
 
-#define CURR_WATER_LEVEL_ID 1
-#define WATER_LOW_LEVEL_IND_ID 2
-#define ANALOG_TANK_EMPTY_ID 3
-#define ANALOG_TANK_FULL_ID 4
+#define FOR_LOW_LEVEL 0
+#define FOR_HIGH_LEVEL 1
+#define DEFAULT_SEND_STATUS 2
 
-#define DEFAULT_LOW_LEVEL 40
-
-#define RISING_LEVEL_POLL_DURATION 30
-#define DEFAULT_LEVEL_POLL_DURATION 300
+#define TANK_LOW_LEVEL_ID 1
+#define TANK_HIGH_LEVEL_ID 2
 
 #endif
 

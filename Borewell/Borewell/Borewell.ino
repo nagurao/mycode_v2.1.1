@@ -7,7 +7,7 @@
 #define BOREWELL_NODE
 #define NODE_HAS_RELAY
 #define NODE_WITH_HIGH_LOW_FEATURE
-#define WATER_TANK_NODE_IDS
+#define WATER_TANK_NODE
 #define KEYPAD_1R_2C
 
 #define MY_RADIO_NRF24
@@ -28,14 +28,13 @@ boolean borewellOn;
 boolean tank01LowLevel;
 boolean tank01HighLevel;
 
-float currentWaterLevel;
-float dryRunInitWaterLevel;
-
 MyMessage thingspeakMessage(WIFI_NODEMCU_ID, V_CUSTOM);
 MyMessage borewellMotorMessage(BOREWELL_MOTOR_STATUS_ID, V_STATUS);
 MyMessage borewellMotorOnRelayMessage(BORE_ON_RELAY_ID, V_STATUS);
 MyMessage borewellMotorOffRelayMessage(BORE_OFF_RELAY_ID, V_STATUS);
-MyMessage pollTimerMessage(BOREWELL_MOTOR_STATUS_ID, V_VAR2);
+MyMessage tank01Message(BOREWELL_MOTOR_STATUS_ID, V_STATUS);
+MyMessage lowLevelMessage(TANK_LOW_LEVEL_ID, V_TRIPPED);
+MyMessage highLevelMessage(TANK_HIGH_LEVEL_ID, V_TRIPPED);
 
 Keypad keypad = Keypad(makeKeymap(keys), rowsPins, colsPins, ROWS, COLS);
 
@@ -53,8 +52,6 @@ void setup()
 	borewellOn = false;
 	tank01LowLevel = false;
 	tank01HighLevel = false;
-	currentWaterLevel = 0;
-	dryRunInitWaterLevel = 0;
 
 	digitalWrite(BORE_ON_RELAY_PIN, LOW);
 	digitalWrite(BORE_OFF_RELAY_PIN, LOW);
@@ -64,17 +61,17 @@ void setup()
 	thingspeakMessage.setType(V_CUSTOM);
 	thingspeakMessage.setSensor(WIFI_NODEMCU_ID);
 
-	pollTimerMessage.setDestination(TANK_01_NODE_ID);
-	pollTimerMessage.setType(V_VAR2);
+	lowLevelMessage.setDestination(TANK_01_NODE_ID);
+	highLevelMessage.setDestination(TANK_01_NODE_ID);
 
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
-	dryRunTimer = Alarm.timerRepeat(DRY_RUN_POLL_DURATION, checkCurrWaterLevel);
+	dryRunTimer = Alarm.timerRepeat(DRY_RUN_POLL_DURATION, turnOffBorewell);
 	Alarm.disable(dryRunTimer);
 }
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(BOREWELL_MOTOR_STATUS_ID, S_BINARY, "Borewell Motor");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
@@ -116,26 +113,47 @@ void receive(const MyMessage &message)
 			break;
 		}
 		break;
-	case V_VAR2:
-		if (message.getInt())
-			tank01LowLevel = LOW_LEVEL;
-		else
-			tank01LowLevel = NOT_LOW_LEVEL;
+	case V_TRIPPED:
+		switch (message.sensor)
+		{
+		case TANK_LOW_LEVEL_ID:
+			if (message.getInt())
+				tank01LowLevel = LOW_LEVEL;
+			else
+				tank01LowLevel = NOT_LOW_LEVEL;
+			lowLevelMessage.set(tank01LowLevel);
+			send(lowLevelMessage);
+			wait(WAIT_AFTER_SEND_MESSAGE);
+			break;
+		case TANK_HIGH_LEVEL_ID:
+			if (message.getInt())
+				tank01HighLevel = HIGH_LEVEL;
+			else
+				tank01HighLevel = NOT_HIGH_LEVEL;
+			highLevelMessage.set(tank01HighLevel);
+			send(highLevelMessage);
+			wait(WAIT_AFTER_SEND_MESSAGE);
+			break;
+		}
 
 		if (tank01LowLevel && !borewellOn)
 			turnOnBorewell();
-
-		break;
-	case V_VAR3:
-		if (message.getInt())
-			tank01HighLevel = HIGH_LEVEL;
-		else
-			tank01HighLevel = NOT_HIGH_LEVEL;
+		
+		if (borewellOn)
+		{
+			send(tank01Message.set(RELAY_ON));
+			wait(WAIT_AFTER_SEND_MESSAGE);
+		}
 
 		if (tank01HighLevel && borewellOn)
 			turnOffBorewell();
-	case V_VOLUME:
-		currentWaterLevel = message.getFloat();
+		
+		if (!borewellOn)
+		{
+			send(tank01Message.set(RELAY_OFF));
+			wait(WAIT_AFTER_SEND_MESSAGE);
+		}
+		break;
 	}
 }
 
@@ -144,23 +162,22 @@ void turnOnBorewell()
 	digitalWrite(BORE_ON_RELAY_PIN, RELAY_ON);
 	send(borewellMotorOnRelayMessage.set(RELAY_ON));
 	Alarm.timerOnce(RELAY_TRIGGER_INTERVAL, toggleOnRelay);
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 }
 
 void toggleOnRelay()
 {
 	digitalWrite(BORE_ON_RELAY_PIN, RELAY_OFF);
 	send(borewellMotorOnRelayMessage.set(RELAY_OFF));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(borewellMotorMessage.set(RELAY_ON));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(thingspeakMessage.set(RELAY_ON));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	digitalWrite(MOTOR_STATUS_PIN, RELAY_ON);
 	borewellOn = true;
-	send(pollTimerMessage.set(RELAY_ON));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	dryRunInitWaterLevel = currentWaterLevel;
+	send(tank01Message.set(RELAY_ON));
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	Alarm.enable(dryRunTimer);
 }
 
@@ -169,31 +186,23 @@ void turnOffBorewell()
 	digitalWrite(BORE_OFF_RELAY_PIN, RELAY_ON);
 	send(borewellMotorOffRelayMessage.set(RELAY_ON));
 	Alarm.timerOnce(RELAY_TRIGGER_INTERVAL, toggleOffRelay);
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 }
 
 void toggleOffRelay()
 {
 	digitalWrite(BORE_OFF_RELAY_PIN, RELAY_OFF);
 	send(borewellMotorOffRelayMessage.set(RELAY_OFF));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(borewellMotorMessage.set(RELAY_OFF));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(thingspeakMessage.set(RELAY_OFF));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	digitalWrite(MOTOR_STATUS_PIN, RELAY_OFF);
 	borewellOn = false;
-	send(pollTimerMessage.set(RELAY_OFF));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	send(tank01Message.set(RELAY_OFF));
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	Alarm.disable(dryRunTimer);
-}
-
-void checkCurrWaterLevel()
-{
-	if (currentWaterLevel <= dryRunInitWaterLevel)
-		turnOffBorewell();
-	else
-		dryRunInitWaterLevel = currentWaterLevel;
 }
 
 void keypadEvent(KeypadEvent key)
