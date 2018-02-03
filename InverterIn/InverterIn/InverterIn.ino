@@ -133,6 +133,7 @@ void receive(const MyMessage &message)
 			resetAll();
 			break;
 		}
+		break;
 	case V_KWH:
 		switch (message.sensor)
 		{
