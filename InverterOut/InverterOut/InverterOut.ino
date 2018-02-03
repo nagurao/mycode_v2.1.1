@@ -54,7 +54,8 @@ void before()
 {
 	pulseFactor = DEFAULT_BLINKS_PER_KWH / 1000;
 	resetAll();
-	attachInterrupt(INTERRUPT_PULSE, onPulse, RISING);
+	pinMode(PULSE_SENSOR_PIN, INPUT_PULLUP);
+	attachInterrupt(digitalPinToInterrupt(PULSE_SENSOR_PIN), onPulse, RISING);
 }
 
 void setup()
