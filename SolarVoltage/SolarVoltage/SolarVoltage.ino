@@ -31,6 +31,7 @@ boolean sendScaleFactorRequest;
 boolean resistorR1Received;
 boolean resistorR2Received;
 boolean scaleFactorReceived;
+boolean sendRawValues;
 
 byte resistorR1RequestCount;
 byte resistorR2RequestCount;
@@ -65,6 +66,7 @@ void setup()
 	resistorR2RequestCount = 0;
 	scaleFactorRequestCount = 0;
 
+	sendRawValues = false;
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
 	solarVoltageMessage.setDestination(BATT_VOLTAGE_NODE_ID);
 }
@@ -82,6 +84,8 @@ void presentation()
 	present(REF_RAW_VALUE_ID, S_CUSTOM, "Reference Raw");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(INP_RAW_VALUE_ID, S_CUSTOM, "Input Raw");
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	present(SEND_RAW_VALUE_ID, V_STATUS, "Send Raw Values");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 }
 
@@ -170,6 +174,12 @@ void receive(const MyMessage &message)
 		if (resistorR1Received && resistorR2Received && scaleFactorReceived)
 			readSolarVoltage();
 		break;
+	case V_STATUS:
+		if (message.getInt())
+			sendRawValues = true;
+		else
+			sendRawValues = false;
+		break;
 	}
 }
 
@@ -185,23 +195,29 @@ void readSolarVoltage()
 		wait(WAIT_50MS);
 	}
 	thresholdVoltage = thresholdVoltage / 10;
-	rawAnalogValueMessage.setSensor(REF_RAW_VALUE_ID);
-	rawAnalogValueMessage.setType(V_VAR4);
-	rawAnalogValueMessage.set(thresholdVoltage, 2);
-	send(rawAnalogValueMessage);
-	wait(WAIT_AFTER_SEND_MESSAGE);
-
+	
+	if (sendRawValues)
+	{
+		rawAnalogValueMessage.setSensor(REF_RAW_VALUE_ID);
+		rawAnalogValueMessage.setType(V_VAR4);
+		rawAnalogValueMessage.set(thresholdVoltage, 2);
+		send(rawAnalogValueMessage);
+		wait(WAIT_AFTER_SEND_MESSAGE);
+	}
 	thresholdVoltage = thresholdVoltage * 5.0 / 1024;
 
 	voltsPerBit = ((thresholdVoltage * (resistorR1Value + resistorR2Value)) / (resistorR2Value * 1024));
 
 	sensedInputVoltage = sensedInputVoltage / 10;
 
-	rawAnalogValueMessage.setSensor(INP_RAW_VALUE_ID);
-	rawAnalogValueMessage.setType(V_VAR5);
-	rawAnalogValueMessage.set(sensedInputVoltage, 2);
-	send(rawAnalogValueMessage);
-	wait(WAIT_AFTER_SEND_MESSAGE);
+	if (sendRawValues)
+	{
+		rawAnalogValueMessage.setSensor(INP_RAW_VALUE_ID);
+		rawAnalogValueMessage.setType(V_VAR5);
+		rawAnalogValueMessage.set(sensedInputVoltage, 2);
+		send(rawAnalogValueMessage);
+		wait(WAIT_AFTER_SEND_MESSAGE);
+	}
 
 	float solarVoltage = 0.00;
 	if (scaleFactor < 0.25)

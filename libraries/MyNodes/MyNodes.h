@@ -174,6 +174,7 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define RESET_RELAY_ID 6
 #define REF_RAW_VALUE_ID 7
 #define INP_RAW_VALUE_ID 8
+#define SEND_RAW_VALUE_ID 10
 
 #define VOLTAGE_SENSE_PIN A0
 #define THRESHOLD_VOLTAGE_PIN A1
