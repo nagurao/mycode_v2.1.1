@@ -39,6 +39,7 @@ boolean sendR1Request;
 boolean sendR2Request;
 boolean sendScaleFactorRequest;
 boolean sendRelayStatusRequest;
+boolean sendRawValues;
 
 boolean resistorR1Received;
 boolean resistorR2Received;
@@ -85,6 +86,7 @@ void setup()
 	resistorR2Received = false;
 	scaleFactorReceived = false;
 	relayStatusReceived = false;
+	sendRawValues = false;
 	resistorR1RequestCount = 0;
 	resistorR2RequestCount = 0;
 	scaleFactorRequestCount = 0;
@@ -127,9 +129,12 @@ void presentation()
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(INP_RAW_VALUE_ID, S_CUSTOM, "Input Raw");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	present(SEND_RAW_VALUE_ID, S_BINARY, "Send Raw Values");
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	send(resetRelayMessage.set(RELAY_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	request(SOLAR_VOLTAGE_ID, V_VOLTAGE, SOLAR_VOLTAGE_NODE_ID);
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 }
 
 void loop()
@@ -272,24 +277,34 @@ void receive(const MyMessage &message)
 		}
 		break;
 	case V_STATUS:
-		if (message.getInt())
+		switch (message.sensor)
 		{
-			digitalWrite(RELAY_PIN, RELAY_ON);
-			send(resetRelayMessage.set(RELAY_ON));
-			wait(WAIT_AFTER_SEND_MESSAGE);
-		}
-		else
-		{
-			digitalWrite(RELAY_PIN, RELAY_OFF);
-			send(resetRelayMessage.set(RELAY_OFF));
-			wait(WAIT_AFTER_SEND_MESSAGE);
-		}
-		if (!relayStatusReceived)
-		{
-			relayStatusReceived = true;
-			Alarm.free(requestTimer);
-			sendRelayStatusRequest = false;
-			request(RESET_RELAY_ID, V_STATUS);
+		case RESET_RELAY_ID:
+			if (message.getInt())
+			{
+				digitalWrite(RELAY_PIN, RELAY_ON);
+				send(resetRelayMessage.set(RELAY_ON));
+				wait(WAIT_AFTER_SEND_MESSAGE);
+			}
+			else
+			{
+				digitalWrite(RELAY_PIN, RELAY_OFF);
+				send(resetRelayMessage.set(RELAY_OFF));
+				wait(WAIT_AFTER_SEND_MESSAGE);
+			}
+			if (!relayStatusReceived)
+			{
+				relayStatusReceived = true;
+				Alarm.free(requestTimer);
+				sendRelayStatusRequest = false;
+				request(RESET_RELAY_ID, V_STATUS);
+			}
+		case SEND_RAW_VALUE_ID:
+			if (message.getInt())
+				sendRawValues = true;
+			else
+				sendRawValues = false;
+			break;
 		}
 	}
 }
@@ -306,22 +321,30 @@ void getBatteryVoltage()
 		wait(WAIT_50MS);
 	}
 	thresholdVoltage = thresholdVoltage / 10;
-	rawAnalogValueMessage.setSensor(REF_RAW_VALUE_ID);
-	rawAnalogValueMessage.setType(V_VAR4);
-	rawAnalogValueMessage.set(thresholdVoltage, 2);
-	send(rawAnalogValueMessage);
-	wait(WAIT_AFTER_SEND_MESSAGE);
+	
+	if (sendRawValues)
+	{
+		rawAnalogValueMessage.setSensor(REF_RAW_VALUE_ID);
+		rawAnalogValueMessage.setType(V_VAR4);
+		rawAnalogValueMessage.set(thresholdVoltage, 2);
+		send(rawAnalogValueMessage);
+		wait(WAIT_AFTER_SEND_MESSAGE);
+	}
 
 	thresholdVoltage = thresholdVoltage * 5.0 / 1024;
 
 	voltsPerBit = ((thresholdVoltage * (resistorR1Value + resistorR2Value)) / (resistorR2Value * 1024));
 
 	sensedInputVoltage = sensedInputVoltage / 10;
-	rawAnalogValueMessage.setSensor(INP_RAW_VALUE_ID);
-	rawAnalogValueMessage.setType(V_VAR5);
-	rawAnalogValueMessage.set(sensedInputVoltage, 2);
-	send(rawAnalogValueMessage);
-	wait(WAIT_AFTER_SEND_MESSAGE);
+	
+	if (sendRawValues)
+	{
+		rawAnalogValueMessage.setSensor(INP_RAW_VALUE_ID);
+		rawAnalogValueMessage.setType(V_VAR5);
+		rawAnalogValueMessage.set(sensedInputVoltage, 2);
+		send(rawAnalogValueMessage);
+		wait(WAIT_AFTER_SEND_MESSAGE);
+	}
 
 	if (scaleFactor < 0.25)
 		batteryVoltage = (sensedInputVoltage * voltsPerBit) + scaleFactor;

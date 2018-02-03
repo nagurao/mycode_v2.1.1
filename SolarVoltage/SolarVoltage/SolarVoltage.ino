@@ -85,7 +85,7 @@ void presentation()
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(INP_RAW_VALUE_ID, S_CUSTOM, "Input Raw");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	present(SEND_RAW_VALUE_ID, V_STATUS, "Send Raw Values");
+	present(SEND_RAW_VALUE_ID, S_BINARY, "Send Raw Values");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 }
 
