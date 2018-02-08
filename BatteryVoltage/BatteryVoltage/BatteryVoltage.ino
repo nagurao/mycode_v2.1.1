@@ -6,6 +6,7 @@
 #define SOLAR_BATT_VOLTAGE_NODE
 #define NODE_INTERACTS_WITH_LCD
 #define NODE_HAS_RELAY
+#define NODE_WITH_ON_OFF_FEATURE
 
 #define MY_RADIO_NRF24
 #define MY_NODE_ID BATT_VOLTAGE_NODE_ID
@@ -64,6 +65,7 @@ MyMessage thingspeakMessage(WIFI_NODEMCU_ID, V_CUSTOM);
 MyMessage lcdVoltageMessage;
 MyMessage resetRelayMessage(RESET_RELAY_ID, V_STATUS);
 MyMessage rawAnalogValueMessage;
+MyMessage rawValuesMessage(SEND_RAW_VALUE_ID, V_STATUS);
 
 void before()
 {
@@ -134,6 +136,11 @@ void presentation()
 	send(resetRelayMessage.set(RELAY_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	request(SOLAR_VOLTAGE_ID, V_VOLTAGE, SOLAR_VOLTAGE_NODE_ID);
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	if(sendRawValues)
+		send(rawValuesMessage.set(TURN_ON));
+	else
+		send(rawValuesMessage.set(TURN_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 }
 
@@ -254,6 +261,7 @@ void receive(const MyMessage &message)
 			getBatteryVoltageTimer = Alarm.timerRepeat(FIVE_MINUTES, getBatteryVoltage);
 			sendRelayStatusRequest = true;
 		}
+		break;
 	case V_VAR4:
 		if (message.getInt() == UP)
 		{
@@ -299,11 +307,19 @@ void receive(const MyMessage &message)
 				sendRelayStatusRequest = false;
 				request(RESET_RELAY_ID, V_STATUS);
 			}
+			break;
 		case SEND_RAW_VALUE_ID:
 			if (message.getInt())
+			{
 				sendRawValues = true;
+				send(rawValuesMessage.set(TURN_ON));
+			}
 			else
+			{
 				sendRawValues = false;
+				send(rawValuesMessage.set(TURN_OFF));
+			}
+			wait(WAIT_AFTER_SEND_MESSAGE);
 			break;
 		}
 	}

@@ -255,17 +255,17 @@ void setup()
 void presentation()
 {
 	sendSketchInfo(APPLICATION_NAME, __DATE__);
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	present(SUNRISE_TIME_ID, S_CUSTOM, "Sunrise Time (sec)");
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	present(SUNSET_TIME_ID, S_CUSTOM, "Sunset Time (sec)");
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	present(LAST_UPDATE_TIME_ID, S_CUSTOM, "Last Update");
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	present(SUNRISE_TRIGGER_TIME_ID, S_CUSTOM, "Sunrise Trigger Time");
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	present(SUNSET_TRIGGER_TIME_ID, S_CUSTOM, "Sunset Trigger Time");
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	wait(WAIT_AFTER_SEND_MESSAGE);
 	requestTime();
 }
 

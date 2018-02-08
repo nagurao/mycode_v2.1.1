@@ -4,6 +4,7 @@
 #include <SPI.h>
 
 #define SOLAR_BATT_VOLTAGE_NODE
+#define NODE_WITH_ON_OFF_FEATURE
 
 #define MY_RADIO_NRF24
 #define MY_NODE_ID SOLAR_VOLTAGE_NODE_ID
@@ -43,6 +44,7 @@ float resistorR2Value;
 float scaleFactor;
 
 MyMessage solarVoltageMessage(SOLAR_VOLTAGE_ID, V_VOLTAGE);
+MyMessage rawValuesMessage(SEND_RAW_VALUE_ID, V_STATUS);
 MyMessage rawAnalogValueMessage;
 
 void before()
@@ -86,6 +88,11 @@ void presentation()
 	present(INP_RAW_VALUE_ID, S_CUSTOM, "Input Raw");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(SEND_RAW_VALUE_ID, S_BINARY, "Send Raw Values");
+	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
+	if (sendRawValues)
+		send(rawValuesMessage.set(TURN_ON));
+	else
+		send(rawValuesMessage.set(TURN_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 }
 
@@ -170,15 +177,23 @@ void receive(const MyMessage &message)
 			sendNodeUpMessage();
 			nodeUpTimer = Alarm.timerRepeat(FIVE_MINUTES, sendNodeUpMessage);
 		}
+		break;
 	case V_VOLTAGE:
 		if (resistorR1Received && resistorR2Received && scaleFactorReceived)
 			readSolarVoltage();
 		break;
 	case V_STATUS:
 		if (message.getInt())
+		{
 			sendRawValues = true;
+			send(rawValuesMessage.set(TURN_ON));
+		}
 		else
+		{
 			sendRawValues = false;
+			send(rawValuesMessage.set(TURN_OFF));
+		}
+		wait(WAIT_AFTER_SEND_MESSAGE);
 		break;
 	}
 }
