@@ -23,6 +23,7 @@
 
 AlarmId heartbeatTimer;
 AlarmId dryRunTimer;
+AlarmId updateTimer;
 
 boolean borewellOn;
 boolean tank01LowLevel;
@@ -67,6 +68,8 @@ void setup()
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
 	dryRunTimer = Alarm.timerRepeat(DRY_RUN_POLL_DURATION, turnOffBorewell);
 	Alarm.disable(dryRunTimer);
+
+	updateTimer = Alarm.timerRepeat(QUATER_HOUR, sendUpdate);
 }
 
 void presentation()
@@ -203,6 +206,27 @@ void toggleOffRelay()
 	send(tank01Message.set(RELAY_OFF));
 	wait(WAIT_AFTER_SEND_MESSAGE);
 	Alarm.disable(dryRunTimer);
+}
+
+void sendUpdate()
+{
+	if (digitalRead(BORE_ON_RELAY_PIN))
+		send(borewellMotorOnRelayMessage.set(RELAY_ON));
+	else
+		send(borewellMotorOnRelayMessage.set(RELAY_OFF));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
+	if(digitalRead(BORE_OFF_RELAY_PIN))
+		send(borewellMotorOffRelayMessage.set(RELAY_ON));
+	else
+		send(borewellMotorOffRelayMessage.set(RELAY_OFF));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
+	if(digitalRead(MOTOR_STATUS_PIN))
+		send(borewellMotorMessage.set(RELAY_ON));
+	else
+		send(borewellMotorMessage.set(RELAY_OFF));
+	wait(WAIT_AFTER_SEND_MESSAGE);
 }
 
 void keypadEvent(KeypadEvent key)
