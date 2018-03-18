@@ -238,6 +238,7 @@ void sendAccumulationData()
 	wait(WAIT_AFTER_SEND_MESSAGE);
 
 	MyMessage lcdNodeMessage;
+	lcdNodeMessage.setDestination(LCD_NODE_ID);
 	lcdNodeMessage.setSensor(INV_IN_CURR_WATT_ID);
 	lcdNodeMessage.setType(V_WATT);
 	lcdNodeMessage.set(currWatt, 2);

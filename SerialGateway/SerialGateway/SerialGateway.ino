@@ -28,10 +28,20 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 }
 
 void loop()
 {
 
+}
+
+char* getCodeVersion()
+{
+	char codeVersion[20];
+	strcpy(codeVersion, "");
+	strcat(codeVersion, __DATE__);
+	strcat(codeVersion, " ");
+	strcat(codeVersion, __TIME__);
+	return codeVersion;
 }

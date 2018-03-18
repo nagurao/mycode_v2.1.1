@@ -22,7 +22,7 @@
 #define APPLICATION_NAME "Borewell Motor"
 
 AlarmId heartbeatTimer;
-AlarmId dryRunTimer;
+//AlarmId dryRunTimer;
 AlarmId updateTimer;
 
 boolean borewellOn;
@@ -66,8 +66,8 @@ void setup()
 	highLevelMessage.setDestination(TANK_01_NODE_ID);
 
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
-	dryRunTimer = Alarm.timerRepeat(DRY_RUN_POLL_DURATION, turnOffBorewell);
-	Alarm.disable(dryRunTimer);
+	//dryRunTimer = Alarm.timerRepeat(DRY_RUN_POLL_DURATION, turnOffBorewell);
+	//Alarm.disable(dryRunTimer);
 
 	updateTimer = Alarm.timerRepeat(QUATER_HOUR, sendUpdate);
 }
@@ -181,7 +181,7 @@ void toggleOnRelay()
 	borewellOn = true;
 	send(tank01Message.set(RELAY_ON));
 	wait(WAIT_AFTER_SEND_MESSAGE);
-	Alarm.enable(dryRunTimer);
+	//Alarm.enable(dryRunTimer);
 }
 
 void turnOffBorewell()
@@ -205,7 +205,7 @@ void toggleOffRelay()
 	borewellOn = false;
 	send(tank01Message.set(RELAY_OFF));
 	wait(WAIT_AFTER_SEND_MESSAGE);
-	Alarm.disable(dryRunTimer);
+	//Alarm.disable(dryRunTimer);
 }
 
 void sendUpdate()

@@ -119,7 +119,7 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define BOREWELL_MOTOR_STATUS_ID 1
 #define BORE_ON_RELAY_ID 2
 #define BORE_OFF_RELAY_ID 3
-#define RELAY_TRIGGER_INTERVAL 3
+#define RELAY_TRIGGER_INTERVAL 2
 
 #define DRY_RUN_POLL_DURATION 900
 #define MOTOR_STATUS_PIN 3
