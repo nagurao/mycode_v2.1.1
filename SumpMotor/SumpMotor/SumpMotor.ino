@@ -31,7 +31,7 @@ boolean tank03HighLevel;
 boolean sumpMotorOn;
 
 MyMessage thingspeakMessage(WIFI_NODEMCU_ID, V_CUSTOM);
-MyMessage sumpMotorRelayMessage(RELAY_ID, V_STATUS);
+MyMessage sumpMotorRelayMessage(SUMP_MOTOR_RELAY_ID, V_STATUS);
 MyMessage pollTimerMessage;
 MyMessage tank02And03WaterHighLevelMessage(CURR_WATER_LEVEL_ID, V_VAR3);
 
@@ -71,9 +71,9 @@ void setup()
 
 void presentation()
 {
-	sendSketchInfo(APPLICATION_NAME, __DATE__);
+	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	present(RELAY_ID, S_BINARY, "Sump Motor Relay");
+	present(SUMP_MOTOR_RELAY_ID, S_BINARY, "Sump Motor Relay");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	send(sumpMotorRelayMessage.set(RELAY_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);

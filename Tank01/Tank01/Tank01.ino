@@ -122,7 +122,7 @@ void loop()
 		borewellNodeMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL);
 		send(borewellNodeMessage);
 		wait(WAIT_AFTER_SEND_MESSAGE);
-		checkHighTimer = Alarm.timerOnce(ONE_MINUTE, checkHighLevelAck);
+		checkHighTimer = Alarm.timerOnce(TWENTY_SECS, checkHighLevelAck);
 	}
 	Alarm.delay(1);
 }

@@ -9,6 +9,9 @@
 #define WAIT_10MS 10
 #define WAIT_50MS 50
 #define WAIT_1SEC 1000
+#define TEN_SECS 10
+#define TWENTY_SECS 20
+#define THIRTY_SECS 30
 #define ONE_MINUTE 60
 #define FIVE_MINUTES 300
 #define QUATER_HOUR 900
@@ -49,7 +52,9 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 18 - 3Phase Wattmeter
 19 - 1Phase Wattmeter
 20 - Temperature & Humidity 
-21 - SMS Node
+21 - Terrace Soil Sensor
+22 - GFloor Soil Sensor
+23 - SMS Node
 250 - Default Firmware Node
 254 - Thingspeak Node
 */
@@ -74,7 +79,9 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define PH3_NODE_ID 18
 #define PH1_NODE_ID 19
 #define TEMP_AND_HUMIDITY_NODE_ID 20
-#define SMS_NODE_ID 21
+#define TERRACE_SOIL_SENSOR_NODE_ID 21
+#define GFLOOR_SOIL_SENSOR_NODE_ID 22
+#define SMS_NODE_ID 23
 
 
 #define DEFAULT_FIRMWARE_NODE_ID 250
@@ -109,6 +116,7 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 
 // Overhead Tank 02
 #if defined TANK_02_NODE
+#define SUMP_MOTOR_ADHOC_ID 3
 #endif
 
 //Underground Tank
@@ -129,7 +137,7 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 
 #if defined SUMP_RELATED_NODE
 #define CURR_WATER_LEVEL_ID 1
-#define RELAY_ID 1
+#define SUMP_MOTOR_RELAY_ID 1
 #define RELAY_PIN 7
 
 #define MOTOR_STATUS_PIN 3
@@ -245,6 +253,22 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define NIGHT_MM 46
 #define NIGHT_SS 00
 #endif
+
+#if defined SOIL_MOISTURE_NODE
+#define SOIL_SENSOR_ID 1
+#define SOIL_MOISTURE_THRESHOLD_ID 2
+#define VALVE_RELAY_ID 3
+#define DEFAULT_SOIL_MOISTURE_LEVEL 75.0F
+#define MAX_SOIL_MOISTURE_LEVEL 90.0F
+#define MAX_ANALOG_SENSOR_VALUE 840.00F
+#define ZERO_VALUE 0.00F
+#define CENT_VALUE 100.00F
+
+#define SOIL_SENSOR_PIN A0
+#define VALVE_RELAY_PIN 7
+#define SENSOR_CONTROL_PIN 8
+#endif
+
 
 #if defined SMS_NODE
 

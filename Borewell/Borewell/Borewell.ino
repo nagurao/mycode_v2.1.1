@@ -148,9 +148,12 @@ void receive(const MyMessage &message)
 			wait(WAIT_AFTER_SEND_MESSAGE);
 		}
 
-		if (tank01HighLevel && borewellOn)
-			turnOffBorewell();
+		//if (tank01HighLevel && borewellOn)
+		//	turnOffBorewell();
 		
+		if (tank01HighLevel)
+			turnOffBorewell();
+
 		if (!borewellOn)
 		{
 			send(tank01Message.set(RELAY_OFF));
@@ -243,10 +246,10 @@ void keypadEvent(KeypadEvent key)
 			}
 			break;
 		case '2':
-			if (borewellOn)
-			{
+			//if (borewellOn)
+			//{
 				turnOffBorewell();
-			}
+			//}
 			break;
 		}
 		break;
@@ -260,10 +263,10 @@ void keypadEvent(KeypadEvent key)
 			}
 			break;
 		case '2':
-			if (borewellOn)
-			{
+			//if (borewellOn)
+			//{
 				turnOffBorewell();
-			}
+			//}
 			break;
 		}
 		break;
