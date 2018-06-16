@@ -96,13 +96,10 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #if defined LIGHT_NODE
 
 #define LIGHT_RELAY_ID 1
-#define CURR_MODE_ID 2
-#define LIGHT_DURATION_ID 3
-
-#define STANDBY_MODE 0
-#define DUSKLIGHT_MODE 1
+#define LIGHT_DURATION_ID 2
 
 #define LIGHT_RELAY_PIN 7
+#define DEFAULT_LIGHT_ON_DURATION 60
 
 #endif
 
