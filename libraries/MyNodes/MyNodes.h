@@ -196,7 +196,6 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define KEYPAD_READ_INTERVAL 2
 
 #define RELAY_ID 1
-#define CURR_MODE_ID 2
 #define BORE_ON_RELAY_ID 2
 #define BORE_OFF_RELAY_ID 3
 #endif
@@ -229,11 +228,8 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #endif
 
 #if defined WIFI_NODE
-#define STANDBY_MODE 0
-#define DUSKLIGHT_MODE 1
 
 #define RELAY_ID 1
-#define CURR_MODE_ID 2
 #define BORE_ON_RELAY_ID 2
 #define BORE_OFF_RELAY_ID 3
 
@@ -289,7 +285,6 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #define UNKNOWN_MESSAGE "SMS from "
 
 #define RELAY_ID 1
-#define CURR_MODE_ID 2
 #define BORE_ON_RELAY_ID 2
 #define BORE_OFF_RELAY_ID 3
 
@@ -384,7 +379,6 @@ byte colsPins[2] = { 4,5 };
 
 #define MOTION_SENSOR_ID 1
 #define LIGHT_RELAY_ID 2
-#define CURR_MODE_ID 3
 #define LIGHT_DURATION_ID 4
 
 #define STANDBY_MODE 0

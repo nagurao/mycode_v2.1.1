@@ -122,8 +122,8 @@
 #define BATTERY_VOLT_IDX 0
 #define SOLAR_VOLT_IDX 1
 
-#define IN_BALCONY_LIGHT_OPER_MODE_IDX 0
-#define IN_GATE_LIGHT_OPER_MODE_IDX 1
+#define IN_BALCONY_LIGHT_IDX 0
+#define IN_GATE_LIGHT_IDX 1
 #define IN_BOREWELL_ON_IDX 2
 #define IN_BOREWELL_OFF_IDX 3
 #define IN_SUMP_MOTOR_IDX 4
@@ -169,7 +169,7 @@ AlarmId heartbeatTimer;
 AlarmId thingspeakTimer;
 AlarmId incomingDataTimer;
 
-MyMessage lightNodeMessage(CURR_MODE_ID, V_VAR1);
+MyMessage lightNodeMessage(LIGHT_RELAY_ID, V_STATUS);
 MyMessage borewellNodeMessage;
 MyMessage sumpMotorMessage(RELAY_ID, V_STATUS);
 MyMessage lcdNodeMessage;
@@ -847,7 +847,7 @@ void processIncomingData()
 			incomingDataFound = true;
 			switch (channelId)
 			{
-			case IN_BALCONY_LIGHT_OPER_MODE_IDX:
+			case IN_BALCONY_LIGHT_IDX:
 				lightNodeMessage.setDestination(BALCONYLIGHT_NODE_ID);
 				lightNodeMessage.setSensor(LIGHT_RELAY_ID);
 				lightNodeMessage.setType(V_STATUS);
@@ -864,7 +864,7 @@ void processIncomingData()
 				}
 				wait(WAIT_AFTER_SEND_MESSAGE);
 				break;
-			case IN_GATE_LIGHT_OPER_MODE_IDX:
+			case IN_GATE_LIGHT_IDX:
 				lightNodeMessage.setDestination(GATELIGHT_NODE_ID);
 				lightNodeMessage.setSensor(LIGHT_RELAY_ID);
 				lightNodeMessage.setType(V_STATUS);
@@ -1004,16 +1004,16 @@ void checkSunSetRequestStatus()
 void sunriseTriggerMessage()
 {
 	lightNodeMessage.setDestination(BALCONYLIGHT_NODE_ID);
-	lightNodeMessage.setSensor(CURR_MODE_ID);
-	lightNodeMessage.setType(V_VAR1);
-	lightNodeMessage.set(STANDBY_MODE);
+	lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+	lightNodeMessage.setType(V_STATUS);
+	lightNodeMessage.set(RELAY_OFF);
 	send(lightNodeMessage);
 	wait(WAIT_AFTER_SEND_MESSAGE);
 
 	lightNodeMessage.setDestination(GATELIGHT_NODE_ID);
-	lightNodeMessage.setSensor(CURR_MODE_ID);
-	lightNodeMessage.setType(V_VAR1);
-	lightNodeMessage.set(STANDBY_MODE);
+	lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+	lightNodeMessage.setType(V_STATUS);
+	lightNodeMessage.set(RELAY_OFF);
 	send(lightNodeMessage);
 	wait(WAIT_AFTER_SEND_MESSAGE);
 
@@ -1034,16 +1034,16 @@ void sunriseTriggerMessage()
 void sunsetTriggerMessage()
 {
 	lightNodeMessage.setDestination(BALCONYLIGHT_NODE_ID);
-	lightNodeMessage.setSensor(CURR_MODE_ID);
-	lightNodeMessage.setType(V_VAR1);
-	lightNodeMessage.set(DUSKLIGHT_MODE);
+	lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+	lightNodeMessage.setType(V_STATUS);
+	lightNodeMessage.set(RELAY_ON);
 	send(lightNodeMessage);
 	wait(WAIT_AFTER_SEND_MESSAGE);
 
 	lightNodeMessage.setDestination(GATELIGHT_NODE_ID);
-	lightNodeMessage.setSensor(CURR_MODE_ID);
-	lightNodeMessage.setType(V_VAR1);
-	lightNodeMessage.set(DUSKLIGHT_MODE);
+	lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+	lightNodeMessage.setType(V_STATUS);
+	lightNodeMessage.set(RELAY_ON);
 	send(lightNodeMessage);
 	wait(WAIT_AFTER_SEND_MESSAGE);
 
@@ -1064,16 +1064,16 @@ void sunsetTriggerMessage()
 void nightTriggerMessage()
 {
 	lightNodeMessage.setDestination(BALCONYLIGHT_NODE_ID);
-	lightNodeMessage.setSensor(CURR_MODE_ID);
-	lightNodeMessage.setType(V_VAR1);
-	lightNodeMessage.set(STANDBY_MODE);
+	lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+	lightNodeMessage.setType(V_STATUS);
+	lightNodeMessage.set(RELAY_OFF);
 	send(lightNodeMessage);
 	wait(WAIT_AFTER_SEND_MESSAGE);
 
 	lightNodeMessage.setDestination(GATELIGHT_NODE_ID);
-	lightNodeMessage.setSensor(CURR_MODE_ID);
-	lightNodeMessage.setType(V_VAR1);
-	lightNodeMessage.set(STANDBY_MODE);
+	lightNodeMessage.setSensor(LIGHT_RELAY_ID);
+	lightNodeMessage.setType(V_STATUS);
+	lightNodeMessage.set(RELAY_OFF);
 	send(lightNodeMessage);
 	wait(WAIT_AFTER_SEND_MESSAGE);
 

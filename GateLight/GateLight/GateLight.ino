@@ -17,9 +17,6 @@
 
 #define APPLICATION_NAME "Gate Light"
 
-#define DEFAULT_CURR_MODE 0
-#define DEFAULT_LIGHT_ON_DURATION 60
-
 byte currMode;
 byte currModeRequestCount;
 byte lightOnDurationRequestCount;
