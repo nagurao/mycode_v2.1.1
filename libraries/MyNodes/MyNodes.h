@@ -133,10 +133,13 @@ The following are the Node Ids assigned, populated here as comments for easy ref
 #endif
 
 #if defined SUMP_RELATED_NODE
-#define CURR_WATER_LEVEL_ID 1
 #define SUMP_MOTOR_RELAY_ID 1
 #define RELAY_PIN 7
 
+#define TANK02_LOW_LEVEL_ID 1
+#define TANK02_HIGH_LEVEL_ID 2
+#define TANK03_LOW_LEVEL_ID 3
+#define TANK03_HIGH_LEVEL_ID 4
 #define MOTOR_STATUS_PIN 3
 #endif
 
