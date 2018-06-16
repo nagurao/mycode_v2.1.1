@@ -17,12 +17,8 @@
 
 #define APPLICATION_NAME "Gate Light"
 
-byte currMode;
-byte currModeRequestCount;
 byte lightOnDurationRequestCount;
-boolean currModeReceived;
 boolean lightOnDurationReceived;
-boolean sendCurrModeRequest;
 boolean sendlightOnDurationRequest;
 int lightOnDuration;
 
@@ -41,17 +37,14 @@ void before()
 void setup()
 {
 	digitalWrite(LIGHT_RELAY_PIN, LOW);
-	currModeReceived = false;
 	lightOnDurationReceived = false;
-	sendCurrModeRequest = true;
-	sendlightOnDurationRequest = false;
+	sendlightOnDurationRequest = true;
 	staircaseLightRelayMessage.setDestination(STAIRCASE_LIGHT_NODE_ID);
 	staircaseLightRelayMessage.setType(V_STATUS);
 	staircaseLightRelayMessage.setSensor(LIGHT_RELAY_ID);
 	thingspeakMessage.setDestination(THINGSPEAK_NODE_ID);
 	thingspeakMessage.setType(V_CUSTOM);
 	thingspeakMessage.setSensor(WIFI_NODEMCU_ID);
-	currModeRequestCount = 0;
 	lightOnDurationRequestCount = 0;
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
 }
@@ -61,8 +54,6 @@ void presentation()
 	sendSketchInfo(APPLICATION_NAME, getCodeVersion());
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(LIGHT_RELAY_ID, S_BINARY, "Gate Light Relay");
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	present(CURR_MODE_ID, S_CUSTOM, "Operating Mode");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	present(LIGHT_DURATION_ID, S_CUSTOM, "Light On Duration");
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
@@ -74,29 +65,15 @@ void presentation()
 
 void loop()
 {
-	if (sendCurrModeRequest)
-	{
-		sendCurrModeRequest = false;
-		request(CURR_MODE_ID, V_VAR1);
-		requestTimer = Alarm.timerOnce(REQUEST_INTERVAL, checkCurrModeRequestStatus);
-		currModeRequestCount++;
-		if (currModeRequestCount == 10)
-		{
-			MyMessage currModeMessage(CURR_MODE_ID, V_VAR1);
-			send(currModeMessage.set(DEFAULT_CURR_MODE));
-			wait(WAIT_AFTER_SEND_MESSAGE);
-		}
-	}
-
 	if (sendlightOnDurationRequest)
 	{
 		sendlightOnDurationRequest = false;
-		request(LIGHT_DURATION_ID, V_VAR2);
+		request(LIGHT_DURATION_ID, V_VAR1);
 		requestTimer = Alarm.timerOnce(REQUEST_INTERVAL, checkLightOnDurationRequest);
 		lightOnDurationRequestCount++;
 		if (lightOnDurationRequestCount == 10)
 		{
-			MyMessage lightOnDurationMessage(LIGHT_DURATION_ID, V_VAR2);
+			MyMessage lightOnDurationMessage(LIGHT_DURATION_ID, V_VAR1);
 			send(lightOnDurationMessage.set(DEFAULT_LIGHT_ON_DURATION));
 			wait(WAIT_AFTER_SEND_MESSAGE);
 		}
@@ -111,49 +88,12 @@ void receive(const MyMessage &message)
 	switch (message.type)
 	{
 	case V_VAR1:
-		if (currModeReceived)
-		{
-			switch (message.sender)
-			{
-			case THINGSPEAK_NODE_ID:
-				currMode = message.getLong();
-				break;
-			default:
-				currMode = message.getInt();
-				break;
-			}
-			switch (currMode)
-			{
-			case STANDBY_MODE:
-				turnOffLights();
-				currMode = STANDBY_MODE;
-				break;
-			case DUSKLIGHT_MODE:
-				turnOnLights();
-				currMode = DUSKLIGHT_MODE;
-				break;
-			}
-			MyMessage currModeMessage(CURR_MODE_ID, V_VAR1);
-			send(currModeMessage.set(currMode));
-			wait(WAIT_AFTER_SEND_MESSAGE);
-		}
-		else
-		{
-			currMode = message.getInt();
-			currModeReceived = true;
-			Alarm.free(requestTimer);
-			request(CURR_MODE_ID, V_VAR1);
-			wait(WAIT_AFTER_SEND_MESSAGE);
-			sendlightOnDurationRequest = true;
-		}
-		break;
-	case V_VAR2:
 		newLightOnDuration = message.getInt();
 
 		if (lightOnDurationReceived && newLightOnDuration > 0 && newLightOnDuration <= 600)
 		{
 			lightOnDuration = newLightOnDuration;
-			MyMessage lightOnDurationMessage(LIGHT_DURATION_ID, V_VAR2);
+			MyMessage lightOnDurationMessage(LIGHT_DURATION_ID, V_VAR1);
 			send(lightOnDurationMessage.set(lightOnDuration));
 			wait(WAIT_AFTER_SEND_MESSAGE);
 		}
@@ -165,28 +105,22 @@ void receive(const MyMessage &message)
 			else
 			{
 				lightOnDuration = DEFAULT_LIGHT_ON_DURATION;
-				MyMessage lightOnDurationMessage(LIGHT_DURATION_ID, V_VAR2);
+				MyMessage lightOnDurationMessage(LIGHT_DURATION_ID, V_VAR1);
 				send(lightOnDurationMessage.set(lightOnDuration));
 				wait(WAIT_AFTER_SEND_MESSAGE);
 			}
 			lightOnDurationReceived = true;
 			Alarm.free(requestTimer);
-			request(LIGHT_DURATION_ID, V_VAR2);
+			request(LIGHT_DURATION_ID, V_VAR1);
 			wait(WAIT_AFTER_SEND_MESSAGE);
 		}
 		break;
 	case V_STATUS:
-		switch (currMode)
-		{
-		case STANDBY_MODE:
-			if (message.getInt())
-				turnOnLights();
-			else
-				turnOffLights();
-			break;
-		default:
-			break;
-		}
+		if (message.getInt())
+			turnOnLights();
+		else
+			turnOffLights();
+		break;
 	}
 }
 
@@ -197,11 +131,8 @@ void turnOnLights()
 	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(thingspeakMessage.set(RELAY_ON));
 	wait(WAIT_AFTER_SEND_MESSAGE);
-	if (currMode == STANDBY_MODE)
-	{
-		send(staircaseLightRelayMessage.set(RELAY_ON));
-		wait(WAIT_AFTER_SEND_MESSAGE);
-	}
+	send(staircaseLightRelayMessage.set(RELAY_ON));
+	wait(WAIT_AFTER_SEND_MESSAGE);
 }
 
 void turnOffLights()
@@ -211,17 +142,8 @@ void turnOffLights()
 	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(thingspeakMessage.set(RELAY_OFF));
 	wait(WAIT_AFTER_SEND_MESSAGE);
-	if (currMode == STANDBY_MODE)
-	{
-		send(staircaseLightRelayMessage.set(RELAY_OFF));
-		wait(WAIT_AFTER_SEND_MESSAGE);
-	}
-}
-
-void checkCurrModeRequestStatus()
-{
-	if (!currModeReceived)
-		sendCurrModeRequest = true;
+	send(staircaseLightRelayMessage.set(RELAY_OFF));
+	wait(WAIT_AFTER_SEND_MESSAGE);
 }
 
 void checkLightOnDurationRequest()
