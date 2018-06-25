@@ -23,14 +23,14 @@ AlarmId checkLowTimer;
 AlarmId checkHighTimer;
 AlarmId firstTimeTimer;
 
-boolean borewellOn;
-boolean borewellStatusNotReceived;
+volatile boolean sendLowLevelSensorUpdate = false;
+volatile boolean sendHighLevelSensorUpdate = false;
 
-volatile boolean sendLowLevelSensorUpdate;
-volatile boolean sendHighLevelSensorUpdate;
+volatile boolean tankAtLowLevel = false;
+volatile boolean tankAtHighLevel = false;
 
-volatile boolean tankAtLowLevel;
-volatile boolean tankAtHighLevel;
+volatile byte interruptLowLevelCount;
+volatile byte interruptHighLevelCount;
 
 boolean tankLowLevelAck;
 boolean tankHighLevelAck;
@@ -44,6 +44,7 @@ void before()
 {
 	pinMode(LOW_LEVEL_PIN, INPUT_PULLUP);
 	pinMode(HIGH_LEVEL_PIN, INPUT_PULLUP);
+	/*
 	if (digitalRead(LOW_LEVEL_PIN))
 		tankAtLowLevel = false;
 	else
@@ -53,9 +54,7 @@ void before()
 		tankAtHighLevel = false;
 	else
 		tankAtHighLevel = true;
-
-	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
-	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
+	*/
 }
 
 void setup()
@@ -64,12 +63,15 @@ void setup()
 	tankHighLevelAck = false;
 	sendLowLevelSensorUpdate = false;
 	sendHighLevelSensorUpdate = false;
-	borewellStatusNotReceived = true;
+	interruptLowLevelCount = 0;
+	interruptHighLevelCount = 0;
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
+	/*
 	if (tankAtLowLevel)
 		sendLowLevelSensorUpdate = true;
 	if (tankAtHighLevel)
 		sendHighLevelSensorUpdate = true;
+		*/
 }
 
 void presentation()
@@ -84,10 +86,6 @@ void presentation()
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	send(borewellAdhocMessage.set(RELAY_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	firstTimeTimer = Alarm.timerOnce(ONE_MINUTE, firstTime);
 }
 
@@ -95,6 +93,11 @@ void loop()
 {
 	if (sendLowLevelSensorUpdate)
 	{
+		if (interruptLowLevelCount > 10)
+		{
+			detachPinChangeInterrupt(LOW_LEVEL_PIN);
+			Alarm.timerOnce(ONE_MINUTE, enableLowLevelInterrupt);
+		}
 		sendLowLevelSensorUpdate = false;
 		tankLowLevelAck = false;
 		send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
@@ -111,6 +114,11 @@ void loop()
 
 	if (sendHighLevelSensorUpdate)
 	{
+		if (interruptHighLevelCount > 10)
+		{
+			detachPinChangeInterrupt(HIGH_LEVEL_PIN);
+			Alarm.timerOnce(ONE_MINUTE, enableHighLevelInterrupt);
+		}
 		sendHighLevelSensorUpdate = false;
 		tankHighLevelAck = false;
 		send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
@@ -135,15 +143,9 @@ void receive(const MyMessage &message)
 		{
 		case BOREWELL_NODE_ID:
 			if (message.getInt())
-			{
 				borewellAdhocMessage.set(RELAY_ON);
-				borewellOn = true;
-			}
 			else
-			{
 				borewellAdhocMessage.set(RELAY_OFF);
-				borewellOn = false;
-			}
 			send(borewellAdhocMessage);
 			wait(WAIT_AFTER_SEND_MESSAGE);
 			break;
@@ -168,18 +170,21 @@ void receive(const MyMessage &message)
 				break;
 			}
 		}
+		break;
 	}
 }
 
 void lowLevelSensor()
 {
 	tankAtLowLevel = !tankAtLowLevel;
+	interruptLowLevelCount++;
 	sendLowLevelSensorUpdate = true;
 }
 
 void highLevelSensor()
 {
 	tankAtHighLevel = !tankAtHighLevel;
+	interruptHighLevelCount++;
 	sendHighLevelSensorUpdate = true;
 }
 
@@ -217,8 +222,33 @@ void checkHighLevelAck()
 
 void firstTime()
 {
+	if (digitalRead(LOW_LEVEL_PIN))
+		tankAtLowLevel = false;
+	else
+		tankAtLowLevel = true;
+
+	if (digitalRead(HIGH_LEVEL_PIN))
+		tankAtHighLevel = false;
+	else
+		tankAtHighLevel = true;
+
 	send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
 	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
 	wait(WAIT_AFTER_SEND_MESSAGE);
+
+	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
+	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
+}
+
+void enableLowLevelInterrupt()
+{
+	interruptLowLevelCount = 0;
+	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
+}
+
+void enableHighLevelInterrupt()
+{
+	interruptHighLevelCount = 0;
+	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
 }

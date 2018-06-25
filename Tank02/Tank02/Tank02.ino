@@ -24,16 +24,19 @@ AlarmId checkLowTimer;
 AlarmId checkHighTimer;
 AlarmId firstTimeTimer;
 
-volatile boolean sendLowLevelSensorUpdate;
-volatile boolean sendHighLevelSensorUpdate;
+volatile boolean sendLowLevelSensorUpdate = false;
+volatile boolean sendHighLevelSensorUpdate = false;
 
-volatile boolean tankAtLowLevel;
-volatile boolean tankAtHighLevel;
+volatile boolean tankAtLowLevel = false;
+volatile boolean tankAtHighLevel = false;
+
+volatile byte interruptLowLevelCount;
+volatile byte interruptHighLevelCount;
 
 boolean tankLowLevelAck;
 boolean tankHighLevelAck;
 
-MyMessage sumpMotorNodeMessage(SUMP_MOTOR_RELAY_ID, V_STATUS);
+MyMessage sumpMotorNodeMessage;
 MyMessage sumpMotorAdhocMessage(SUMP_MOTOR_ADHOC_ID, V_STATUS);
 MyMessage lowLevelMessage(TANK_LOW_LEVEL_ID, V_TRIPPED);
 MyMessage highLevelMessage(TANK_HIGH_LEVEL_ID, V_TRIPPED);
@@ -42,6 +45,7 @@ void before()
 {
 	pinMode(LOW_LEVEL_PIN, INPUT_PULLUP);
 	pinMode(HIGH_LEVEL_PIN, INPUT_PULLUP);
+	/*
 	if (digitalRead(LOW_LEVEL_PIN))
 		tankAtLowLevel = false;
 	else
@@ -54,6 +58,7 @@ void before()
 
 	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
 	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
+	*/
 }
 
 void setup()
@@ -62,12 +67,14 @@ void setup()
 	tankHighLevelAck = false;
 	sendLowLevelSensorUpdate = false;
 	sendHighLevelSensorUpdate = false;
-
+	interruptLowLevelCount = 0;
+	interruptHighLevelCount = 0;
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
-	if (tankAtLowLevel)
+/*	if (tankAtLowLevel)
 		sendLowLevelSensorUpdate = true;
 	if (tankAtHighLevel)
 		sendHighLevelSensorUpdate = true;
+		*/
 }
 
 void presentation()
@@ -82,10 +89,6 @@ void presentation()
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	send(sumpMotorAdhocMessage.set(RELAY_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
-	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	firstTimeTimer = Alarm.timerOnce(ONE_MINUTE, firstTime);
 }
 
@@ -93,6 +96,11 @@ void loop()
 {
 	if (sendLowLevelSensorUpdate)
 	{
+		if (interruptLowLevelCount > 10)
+		{
+			detachPinChangeInterrupt(LOW_LEVEL_PIN);
+			Alarm.timerOnce(ONE_MINUTE, enableLowLevelInterrupt);
+		}
 		sendLowLevelSensorUpdate = false;
 		tankLowLevelAck = false;
 		send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
@@ -109,6 +117,11 @@ void loop()
 
 	if (sendHighLevelSensorUpdate)
 	{
+		if (interruptHighLevelCount > 10)
+		{
+			detachPinChangeInterrupt(HIGH_LEVEL_PIN);
+			Alarm.timerOnce(ONE_MINUTE, enableHighLevelInterrupt);
+		}
 		sendHighLevelSensorUpdate = false;
 		tankHighLevelAck = false;
 		send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
@@ -160,24 +173,29 @@ void receive(const MyMessage &message)
 				break;
 			}
 		}
+		break;
 	}
 }
 
 void lowLevelSensor()
 {
 	tankAtLowLevel = !tankAtLowLevel;
+	interruptLowLevelCount++;
 	sendLowLevelSensorUpdate = true;
 }
 
 void highLevelSensor()
 {
 	tankAtHighLevel = !tankAtHighLevel;
+	interruptHighLevelCount++;
 	sendHighLevelSensorUpdate = true;
 }
 
 void turnOnSumpMotor()
 {
 	sumpMotorNodeMessage.setDestination(SUMP_MOTOR_NODE_ID);
+	sumpMotorNodeMessage.setSensor(SUMP_MOTOR_RELAY_ID);
+	sumpMotorNodeMessage.setType(V_STATUS);
 	sumpMotorNodeMessage.set(RELAY_ON);
 	send(sumpMotorNodeMessage);
 	wait(WAIT_AFTER_SEND_MESSAGE);
@@ -186,6 +204,8 @@ void turnOnSumpMotor()
 void turnOffSumpMotor()
 {
 	sumpMotorNodeMessage.setDestination(SUMP_MOTOR_NODE_ID);
+	sumpMotorNodeMessage.setSensor(SUMP_MOTOR_RELAY_ID);
+	sumpMotorNodeMessage.setType(V_STATUS);
 	sumpMotorNodeMessage.set(RELAY_OFF);
 	send(sumpMotorNodeMessage);
 	wait(WAIT_AFTER_SEND_MESSAGE);
@@ -205,8 +225,33 @@ void checkHighLevelAck()
 
 void firstTime()
 {
+	if (digitalRead(LOW_LEVEL_PIN))
+		tankAtLowLevel = false;
+	else
+		tankAtLowLevel = true;
+
+	if (digitalRead(HIGH_LEVEL_PIN))
+		tankAtHighLevel = false;
+	else
+		tankAtHighLevel = true;
+
 	send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
 	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
 	wait(WAIT_AFTER_SEND_MESSAGE);
+
+	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
+	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
+}
+
+void enableLowLevelInterrupt()
+{
+	interruptLowLevelCount = 0;
+	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
+}
+
+void enableHighLevelInterrupt()
+{
+	interruptHighLevelCount = 0;
+	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
 }
