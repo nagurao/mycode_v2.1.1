@@ -146,6 +146,7 @@ void receive(const MyMessage &message)
 				turnOffLights();
 			break;
 		}
+		break;
 	}
 }
 

@@ -116,10 +116,21 @@ void receive(const MyMessage &message)
 		}
 		break;
 	case V_STATUS:
-		if (message.getInt())
-			turnOnLights();
-		else
-			turnOffLights();
+		switch (message.sender)
+		{
+		case THINGSPEAK_NODE_ID:
+			if (message.getBool())
+				turnOnLights();
+			else
+				turnOffLights();
+			break;
+		default:
+			if (message.getInt())
+				turnOnLights();
+			else
+				turnOffLights();
+			break;
+		}
 		break;
 	}
 }
