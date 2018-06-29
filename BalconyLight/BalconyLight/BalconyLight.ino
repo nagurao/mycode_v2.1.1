@@ -133,6 +133,12 @@ void receive(const MyMessage &message)
 				wait(WAIT_AFTER_SEND_MESSAGE);
 			}
 			break;
+		case THINGSPEAK_NODE_ID:
+			if (message.getBool())
+				turnOnLights();
+			else
+				turnOffLights();
+			break;
 		default:
 			if (message.getInt())
 				turnOnLights();
