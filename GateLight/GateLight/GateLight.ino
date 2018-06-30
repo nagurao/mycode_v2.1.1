@@ -17,9 +17,14 @@
 
 #define APPLICATION_NAME "Gate Light"
 
+byte lightRelayStatusRequestCount;
 byte lightOnDurationRequestCount;
+
+boolean lightRelayStatusReceived;
+boolean sendLightRelayStatusRequest;
 boolean lightOnDurationReceived;
 boolean sendlightOnDurationRequest;
+
 int lightOnDuration;
 
 AlarmId requestTimer;
@@ -37,14 +42,17 @@ void before()
 void setup()
 {
 	digitalWrite(LIGHT_RELAY_PIN, LOW);
+	lightRelayStatusReceived = false;
+	sendLightRelayStatusRequest = true;
 	lightOnDurationReceived = false;
-	sendlightOnDurationRequest = true;
+	sendlightOnDurationRequest = false;
 	staircaseLightRelayMessage.setDestination(STAIRCASE_LIGHT_NODE_ID);
 	staircaseLightRelayMessage.setType(V_STATUS);
 	staircaseLightRelayMessage.setSensor(LIGHT_RELAY_ID);
 	thingspeakMessage.setDestination(THINGSPEAK_NODE_ID);
 	thingspeakMessage.setType(V_CUSTOM);
 	thingspeakMessage.setSensor(WIFI_NODEMCU_ID);
+	lightRelayStatusRequestCount = 0;
 	lightOnDurationRequestCount = 0;
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
 }
@@ -65,6 +73,19 @@ void presentation()
 
 void loop()
 {
+	if (sendLightRelayStatusRequest)
+	{
+		sendLightRelayStatusRequest = false;
+		request(LIGHT_RELAY_ID, V_STATUS);
+		requestTimer = Alarm.timerOnce(REQUEST_INTERVAL, checkLightRelayStatusRequest);
+		lightRelayStatusRequestCount++;
+		if (lightRelayStatusRequestCount == 10)
+		{
+			lightRelayMessage.set(RELAY_OFF);
+			send(lightRelayMessage);
+			wait(WAIT_AFTER_SEND_MESSAGE);
+		}
+	}
 	if (sendlightOnDurationRequest)
 	{
 		sendlightOnDurationRequest = false;
@@ -125,6 +146,14 @@ void receive(const MyMessage &message)
 				turnOffLights();
 			break;
 		default:
+			if (!lightRelayStatusReceived)
+			{
+				lightRelayStatusReceived = true;
+				Alarm.free(requestTimer);
+				request(LIGHT_RELAY_ID, V_STATUS);
+				wait(WAIT_AFTER_SEND_MESSAGE);
+				sendlightOnDurationRequest = true;
+			}
 			if (message.getInt())
 				turnOnLights();
 			else
@@ -155,6 +184,12 @@ void turnOffLights()
 	wait(WAIT_AFTER_SEND_MESSAGE);
 	send(staircaseLightRelayMessage.set(RELAY_OFF));
 	wait(WAIT_AFTER_SEND_MESSAGE);
+}
+
+void checkLightRelayStatusRequest()
+{
+	if (!lightRelayStatusReceived)
+		sendLightRelayStatusRequest = true;
 }
 
 void checkLightOnDurationRequest()
