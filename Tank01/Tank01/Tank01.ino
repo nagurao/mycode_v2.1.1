@@ -22,7 +22,7 @@ AlarmId heartbeatTimer;
 AlarmId checkLowAckTimer;
 AlarmId checkHighAckTimer;
 AlarmId pollNormalTimer;
-AlarmId pollFastTimer;
+AlarmId updateTimer;
 
 volatile boolean sendLowLevelSensorUpdate = false;
 volatile boolean sendHighLevelSensorUpdate = false;
@@ -33,8 +33,8 @@ volatile boolean tankAtHighLevel = false;
 volatile boolean prevTankAtLowLevel = false;
 volatile boolean prevTankAtHighLevel = false;
 
-volatile byte interruptLowLevelCount;
-volatile byte interruptHighLevelCount;
+volatile boolean borewellOn = false;
+volatile boolean sendUpdate = false;
 
 boolean tankLowLevelAck;
 boolean tankHighLevelAck;
@@ -56,12 +56,12 @@ void setup()
 	tankHighLevelAck = false;
 	sendLowLevelSensorUpdate = false;
 	sendHighLevelSensorUpdate = false;
-	interruptLowLevelCount = 0;
-	interruptHighLevelCount = 0;
+	borewellOn = false;
+	sendUpdate = false;
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
-	pollNormalTimer = Alarm.timerRepeat(FIVE_MINUTES, checkFloatSensors);
-	pollFastTimer = Alarm.timerRepeat(THIRTY_SECS, checkFloatSensors);
-	Alarm.disable(pollFastTimer);
+	pollNormalTimer = Alarm.timerRepeat(ONE_MINUTE, checkFloatSensors);
+	updateTimer = Alarm.timerRepeat(FIVE_MINUTES, checkFloatSensors);
+	//Alarm.disable(pollFastTimer);
 }
 
 void presentation()
@@ -136,6 +136,7 @@ void receive(const MyMessage &message)
 				turnOffBorewell();
 			break;
 		}
+		borewellOn = (message.getInt() ? RELAY_ON : RELAY_OFF);
 		break;
 	case V_TRIPPED:
 		if (message.sender == BOREWELL_NODE_ID)
@@ -152,20 +153,6 @@ void receive(const MyMessage &message)
 		}
 		break;
 	}
-}
-
-void lowLevelSensor()
-{
-	tankAtLowLevel = !tankAtLowLevel;
-	interruptLowLevelCount++;
-	sendLowLevelSensorUpdate = true;
-}
-
-void highLevelSensor()
-{
-	tankAtHighLevel = !tankAtHighLevel;
-	interruptHighLevelCount++;
-	sendHighLevelSensorUpdate = true;
 }
 
 void turnOnBorewell()
@@ -215,19 +202,30 @@ void checkFloatSensors()
 	else
 		tankAtHighLevel = true;
 
-	send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
-	wait(WAIT_AFTER_SEND_MESSAGE);
-	send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
-	wait(WAIT_AFTER_SEND_MESSAGE);
+	if (sendUpdate)
+	{
+		sendUpdate = false;
+		send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
+		wait(WAIT_AFTER_SEND_MESSAGE);
+		send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
+		wait(WAIT_AFTER_SEND_MESSAGE);
+	}
 
-	if ((tankAtLowLevel) || (tankAtLowLevel != prevTankAtLowLevel))
+	if (tankAtLowLevel  || (tankAtLowLevel != prevTankAtLowLevel))
 		sendLowLevelSensorUpdate = true;
-	if ((tankAtHighLevel) || (tankAtHighLevel != prevTankAtHighLevel))
+	if (tankAtHighLevel || (tankAtHighLevel != prevTankAtHighLevel))
 		sendHighLevelSensorUpdate = true;
 
+	/*
 	if (borewellOn)
 		Alarm.enable(pollFastTimer);
 	else
 		Alarm.disable(pollFastTimer);
+	*/
+}
+
+void updateSensorValues()
+{
+	sendUpdate = true;
 }
 
