@@ -20,11 +20,9 @@
 #define APPLICATION_NAME "Tank 02"
 
 AlarmId heartbeatTimer;
-AlarmId checkLowAckTimer;
-AlarmId checkHighAckTimer;
-AlarmId pollNormalTimer;
-AlarmId pollFastTimer;
-AlarmId updateTimer;
+AlarmId checkLowTimer;
+AlarmId checkHighTimer;
+AlarmId firstTimeTimer;
 
 volatile boolean sendLowLevelSensorUpdate = false;
 volatile boolean sendHighLevelSensorUpdate = false;
@@ -32,13 +30,8 @@ volatile boolean sendHighLevelSensorUpdate = false;
 volatile boolean tankAtLowLevel = false;
 volatile boolean tankAtHighLevel = false;
 
-volatile boolean prevTankAtLowLevel = false;
-volatile boolean prevTankAtHighLevel = false;
-
-volatile boolean sumpMotorOn = false;
-volatile boolean prevSumpMotorOn = false;
-volatile boolean sendUpdate = false;
-
+volatile byte interruptLowLevelCount;
+volatile byte interruptHighLevelCount;
 
 boolean tankLowLevelAck;
 boolean tankHighLevelAck;
@@ -52,6 +45,20 @@ void before()
 {
 	pinMode(LOW_LEVEL_PIN, INPUT_PULLUP);
 	pinMode(HIGH_LEVEL_PIN, INPUT_PULLUP);
+	/*
+	if (digitalRead(LOW_LEVEL_PIN))
+	tankAtLowLevel = false;
+	else
+	tankAtLowLevel = true;
+
+	if (digitalRead(HIGH_LEVEL_PIN))
+	tankAtHighLevel = false;
+	else
+	tankAtHighLevel = true;
+
+	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
+	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
+	*/
 }
 
 void setup()
@@ -60,14 +67,14 @@ void setup()
 	tankHighLevelAck = false;
 	sendLowLevelSensorUpdate = false;
 	sendHighLevelSensorUpdate = false;
-	sumpMotorOn = false;
-	prevSumpMotorOn = false;
-	sendUpdate = false;
+	interruptLowLevelCount = 0;
+	interruptHighLevelCount = 0;
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
-	pollNormalTimer = Alarm.timerRepeat(ONE_MINUTE, checkFloatSensors);
-	updateTimer = Alarm.timerRepeat(FIVE_MINUTES, updateSensorValues);
-	pollFastTimer = Alarm.timerRepeat(TWENTY_SECS, checkFloatSensors);
-	Alarm.disable(pollFastTimer);
+	/*	if (tankAtLowLevel)
+	sendLowLevelSensorUpdate = true;
+	if (tankAtHighLevel)
+	sendHighLevelSensorUpdate = true;
+	*/
 }
 
 void presentation()
@@ -82,13 +89,18 @@ void presentation()
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
 	send(sumpMotorAdhocMessage.set(RELAY_OFF));
 	Alarm.delay(WAIT_AFTER_SEND_MESSAGE);
-	Alarm.timerOnce(ONE_MINUTE, checkFloatSensors);
+	firstTimeTimer = Alarm.timerOnce(ONE_MINUTE, firstTime);
 }
 
 void loop()
 {
 	if (sendLowLevelSensorUpdate)
 	{
+		if (interruptLowLevelCount > 10)
+		{
+			detachPinChangeInterrupt(LOW_LEVEL_PIN);
+			Alarm.timerOnce(ONE_MINUTE, enableLowLevelInterrupt);
+		}
 		sendLowLevelSensorUpdate = false;
 		tankLowLevelAck = false;
 		send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
@@ -100,11 +112,16 @@ void loop()
 		sumpMotorNodeMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL);
 		send(sumpMotorNodeMessage);
 		wait(WAIT_AFTER_SEND_MESSAGE);
-		checkLowAckTimer = Alarm.timerOnce(ONE_MINUTE, checkLowLevelAck);
+		checkLowTimer = Alarm.timerOnce(ONE_MINUTE, checkLowLevelAck);
 	}
 
 	if (sendHighLevelSensorUpdate)
 	{
+		if (interruptHighLevelCount > 10)
+		{
+			detachPinChangeInterrupt(HIGH_LEVEL_PIN);
+			Alarm.timerOnce(ONE_MINUTE, enableHighLevelInterrupt);
+		}
 		sendHighLevelSensorUpdate = false;
 		tankHighLevelAck = false;
 		send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
@@ -116,7 +133,7 @@ void loop()
 		sumpMotorNodeMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL);
 		send(sumpMotorNodeMessage);
 		wait(WAIT_AFTER_SEND_MESSAGE);
-		checkHighAckTimer = Alarm.timerOnce(TWENTY_SECS, checkHighLevelAck);
+		checkHighTimer = Alarm.timerOnce(TWENTY_SECS, checkHighLevelAck);
 	}
 	Alarm.delay(1);
 }
@@ -142,18 +159,6 @@ void receive(const MyMessage &message)
 				turnOffSumpMotor();
 			break;
 		}
-		prevSumpMotorOn = sumpMotorOn;
-		sumpMotorOn = (message.getInt() ? RELAY_ON : RELAY_OFF);
-		if (!prevSumpMotorOn && sumpMotorOn)
-		{
-			Alarm.enable(pollFastTimer);
-			Alarm.disable(pollNormalTimer);
-		}
-		else
-		{
-			Alarm.disable(pollFastTimer);
-			Alarm.enable(pollNormalTimer);
-		}
 		break;
 	case V_TRIPPED:
 		if (message.sender == SUMP_MOTOR_NODE_ID)
@@ -170,6 +175,20 @@ void receive(const MyMessage &message)
 		}
 		break;
 	}
+}
+
+void lowLevelSensor()
+{
+	tankAtLowLevel = !tankAtLowLevel;
+	interruptLowLevelCount++;
+	sendLowLevelSensorUpdate = true;
+}
+
+void highLevelSensor()
+{
+	tankAtHighLevel = !tankAtHighLevel;
+	interruptHighLevelCount++;
+	sendHighLevelSensorUpdate = true;
 }
 
 void turnOnSumpMotor()
@@ -204,60 +223,35 @@ void checkHighLevelAck()
 		sendHighLevelSensorUpdate = true;
 }
 
-void checkFloatSensors()
+void firstTime()
 {
-	Alarm.timerOnce(TWENTY_SECS, lowLevelSensor);
-
-	if (sendUpdate)
-	{
-		sendUpdate = false;
-		send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
-		wait(WAIT_AFTER_SEND_MESSAGE);
-		send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
-		wait(WAIT_AFTER_SEND_MESSAGE);
-	}
-}
-
-void updateSensorValues()
-{
-	sendUpdate = true;
-}
-
-void lowLevelSensor()
-{
-	prevTankAtLowLevel = tankAtLowLevel;
-
-	if (getSensorValue(LOW_LEVEL_PIN))
+	if (digitalRead(LOW_LEVEL_PIN))
 		tankAtLowLevel = false;
 	else
 		tankAtLowLevel = true;
 
-	if (tankAtLowLevel || (tankAtLowLevel != prevTankAtLowLevel))
-		sendLowLevelSensorUpdate = true;
-
-	Alarm.timerOnce(TWENTY_SECS, highLevelSensor);
-}
-
-void highLevelSensor()
-{
-	prevTankAtHighLevel = tankAtHighLevel;
-
-	if (getSensorValue(HIGH_LEVEL_PIN))
+	if (digitalRead(HIGH_LEVEL_PIN))
 		tankAtHighLevel = false;
 	else
 		tankAtHighLevel = true;
 
-	if (tankAtHighLevel || (tankAtHighLevel != prevTankAtHighLevel))
-		sendHighLevelSensorUpdate = true;
+	send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+	send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+
+	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
+	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
 }
 
-boolean getSensorValue(uint8_t pin)
+void enableLowLevelInterrupt()
 {
-	boolean pinValue = false;
-	for (byte i = 0; i < 3; i++)
-	{
-		pinValue = digitalRead(pin);
-		Alarm.delay(WAIT_50MS);
-	}
-	return pinValue;
+	interruptLowLevelCount = 0;
+	attachPinChangeInterrupt(LOW_LEVEL_PIN, lowLevelSensor, CHANGE);
+}
+
+void enableHighLevelInterrupt()
+{
+	interruptHighLevelCount = 0;
+	attachPinChangeInterrupt(HIGH_LEVEL_PIN, highLevelSensor, CHANGE);
 }
