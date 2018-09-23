@@ -228,8 +228,6 @@ void lowLevelSensor()
 
 	if (tankAtLowLevel || (tankAtLowLevel != prevTankAtLowLevel))
 		sendLowLevelSensorUpdate = true;
-
-	Alarm.timerOnce(TWENTY_SECS, highLevelSensor);
 }
 
 void highLevelSensor()
