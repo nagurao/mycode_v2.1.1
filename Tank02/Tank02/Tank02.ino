@@ -37,8 +37,6 @@ volatile boolean prevTankAtHighLevel = false;
 
 volatile boolean sumpMotorOn = false;
 volatile boolean prevSumpMotorOn = false;
-volatile boolean sendUpdate = false;
-
 
 boolean tankLowLevelAck;
 boolean tankHighLevelAck;
@@ -62,12 +60,12 @@ void setup()
 	sendHighLevelSensorUpdate = false;
 	sumpMotorOn = false;
 	prevSumpMotorOn = false;
-	sendUpdate = false;
+
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
-	pollNormalTimer = Alarm.timerRepeat(ONE_MINUTE, checkFloatSensors);
+	pollNormalTimer = Alarm.timerRepeat(ONE_MINUTE + (4 * THIRTY_SECS), checkFloatSensors);
 	updateTimer = Alarm.timerRepeat(FIVE_MINUTES, updateSensorValues);
-	pollFastTimer = Alarm.timerRepeat(TWENTY_SECS, checkFloatSensors);
-	Alarm.disable(pollFastTimer);
+	pollFastTimer = Alarm.timerRepeat(THIRTY_SECS, checkFloatSensors);
+	//Alarm.disable(pollFastTimer);
 }
 
 void presentation()
@@ -144,7 +142,7 @@ void receive(const MyMessage &message)
 		}
 		prevSumpMotorOn = sumpMotorOn;
 		sumpMotorOn = (message.getInt() ? RELAY_ON : RELAY_OFF);
-		if (!prevSumpMotorOn && sumpMotorOn)
+		/*if (!prevSumpMotorOn && sumpMotorOn)
 		{
 			Alarm.enable(pollFastTimer);
 			Alarm.disable(pollNormalTimer);
@@ -153,7 +151,7 @@ void receive(const MyMessage &message)
 		{
 			Alarm.disable(pollFastTimer);
 			Alarm.enable(pollNormalTimer);
-		}
+		}*/
 		break;
 	case V_TRIPPED:
 		if (message.sender == SUMP_MOTOR_NODE_ID)
@@ -206,21 +204,17 @@ void checkHighLevelAck()
 
 void checkFloatSensors()
 {
-	Alarm.timerOnce(TWENTY_SECS, lowLevelSensor);
+	lowLevelSensor();
+	highLevelSensor();
 
-	if (sendUpdate)
-	{
-		sendUpdate = false;
-		send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
-		wait(WAIT_AFTER_SEND_MESSAGE);
-		send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
-		wait(WAIT_AFTER_SEND_MESSAGE);
-	}
 }
 
 void updateSensorValues()
 {
-	sendUpdate = true;
+	send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+	send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
+	wait(WAIT_AFTER_SEND_MESSAGE);
 }
 
 void lowLevelSensor()
@@ -253,11 +247,15 @@ void highLevelSensor()
 
 boolean getSensorValue(uint8_t pin)
 {
-	boolean pinValue = false;
-	for (byte i = 0; i < 3; i++)
+	volatile boolean pinValue = false;
+	volatile boolean prevPinValue = true;
+	volatile boolean returnValue = false;
+	for (byte i = 0; i < 10; i++)
 	{
 		pinValue = digitalRead(pin);
 		Alarm.delay(WAIT_50MS);
+		returnValue = pinValue && prevPinValue;
+		prevPinValue = pinValue;
 	}
-	return pinValue;
+	return returnValue;
 }
