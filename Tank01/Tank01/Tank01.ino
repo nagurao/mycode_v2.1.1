@@ -22,6 +22,7 @@ AlarmId heartbeatTimer;
 AlarmId checkLowAckTimer;
 AlarmId checkHighAckTimer;
 AlarmId pollNormalTimer;
+AlarmId pollFastTimer;
 AlarmId updateTimer;
 
 volatile boolean sendLowLevelSensorUpdate = false;
@@ -34,7 +35,6 @@ volatile boolean prevTankAtLowLevel = false;
 volatile boolean prevTankAtHighLevel = false;
 
 volatile boolean borewellOn = false;
-volatile boolean sendUpdate = false;
 
 boolean tankLowLevelAck;
 boolean tankHighLevelAck;
@@ -57,11 +57,10 @@ void setup()
 	sendLowLevelSensorUpdate = false;
 	sendHighLevelSensorUpdate = false;
 	borewellOn = false;
-	sendUpdate = false;
 	heartbeatTimer = Alarm.timerRepeat(HEARTBEAT_INTERVAL, sendHeartbeat);
-	pollNormalTimer = Alarm.timerRepeat(ONE_MINUTE, checkFloatSensors);
+	pollNormalTimer = Alarm.timerRepeat(ONE_MINUTE + (4 * THIRTY_SECS), checkFloatSensors);
 	updateTimer = Alarm.timerRepeat(FIVE_MINUTES, checkFloatSensors);
-	//Alarm.disable(pollFastTimer);
+	pollFastTimer = Alarm.timerRepeat(THIRTY_SECS, checkFloatSensors);
 }
 
 void presentation()
@@ -189,43 +188,55 @@ void checkHighLevelAck()
 
 void checkFloatSensors()
 {
-	prevTankAtLowLevel = tankAtLowLevel;
-	prevTankAtHighLevel = tankAtHighLevel;
-
-	if (digitalRead(LOW_LEVEL_PIN))
-		tankAtLowLevel = false;
-	else
-		tankAtLowLevel = true;
-
-	if (digitalRead(HIGH_LEVEL_PIN))
-		tankAtHighLevel = false;
-	else
-		tankAtHighLevel = true;
-
-	if (sendUpdate)
-	{
-		sendUpdate = false;
-		send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
-		wait(WAIT_AFTER_SEND_MESSAGE);
-		send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
-		wait(WAIT_AFTER_SEND_MESSAGE);
-	}
-
-	if (tankAtLowLevel  || (tankAtLowLevel != prevTankAtLowLevel))
-		sendLowLevelSensorUpdate = true;
-	if (tankAtHighLevel || (tankAtHighLevel != prevTankAtHighLevel))
-		sendHighLevelSensorUpdate = true;
-
-	/*
-	if (borewellOn)
-		Alarm.enable(pollFastTimer);
-	else
-		Alarm.disable(pollFastTimer);
-	*/
+	lowLevelSensor();
+	highLevelSensor();
 }
 
 void updateSensorValues()
 {
-	sendUpdate = true;
+	send(lowLevelMessage.set(tankAtLowLevel ? LOW_LEVEL : NOT_LOW_LEVEL));
+	wait(WAIT_AFTER_SEND_MESSAGE);
+	send(highLevelMessage.set(tankAtHighLevel ? HIGH_LEVEL : NOT_HIGH_LEVEL));
+	wait(WAIT_AFTER_SEND_MESSAGE);
 }
 
+void lowLevelSensor()
+{
+	prevTankAtLowLevel = tankAtLowLevel;
+
+	if (getSensorValue(LOW_LEVEL_PIN))
+		tankAtLowLevel = false;
+	else
+		tankAtLowLevel = true;
+
+	if (tankAtLowLevel || (tankAtLowLevel != prevTankAtLowLevel))
+		sendLowLevelSensorUpdate = true;
+}
+
+void highLevelSensor()
+{
+	prevTankAtHighLevel = tankAtHighLevel;
+
+	if (getSensorValue(HIGH_LEVEL_PIN))
+		tankAtHighLevel = false;
+	else
+		tankAtHighLevel = true;
+
+	if (tankAtHighLevel || (tankAtHighLevel != prevTankAtHighLevel))
+		sendHighLevelSensorUpdate = true;
+}
+
+boolean getSensorValue(uint8_t pin)
+{
+	volatile boolean pinValue = false;
+	volatile boolean prevPinValue = true;
+	volatile boolean returnValue = false;
+	for (byte i = 0; i < 10; i++)
+	{
+		pinValue = digitalRead(pin);
+		Alarm.delay(WAIT_50MS);
+		returnValue = pinValue && prevPinValue;
+		prevPinValue = pinValue;
+	}
+	return returnValue;
+}
